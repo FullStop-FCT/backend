@@ -4,4 +4,6 @@ public class AuthToken {
 
 	
 	//comment
+	
+	//new comment
 }
