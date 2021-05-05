@@ -5,7 +5,8 @@
          version="3.1">
          
          <display-name>My First Application</display-name>
- <welcome-file-list>
+	
+	 <welcome-file-list>
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
 
@@ -28,7 +29,7 @@
 
 		<init-param>
 			<param-name>jersey.config.server.provider.packages</param-name>
-			<param-value>pt.unl.fct.di.apdc.projetoindividual.resources</param-value>
+			<param-value>pt.unl.fct.di.apdc.helpinhand.resources</param-value>
 		</init-param>
 
 		<init-param>
@@ -38,7 +39,7 @@
 
 		<init-param>
 			<param-name>jersey.config.server.provider.classnames</param-name>
-			<param-value>pt.unl.fct.di.apdc.projetoindividual.filters.AdditionalResponseHeadersFilter</param-value>
+			<param-value>pt.unl.fct.di.apdc.helpinhand.filters.AdditionalResponseHeadersFilter</param-value>
 		</init-param>
 		<init-param>
 			<param-name>jersey.config.servlet.filter.contextPath</param-name>

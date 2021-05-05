@@ -126,7 +126,10 @@
 		</dependency>
 
 		<!-- cloud storage -->
-
+		<dependency>
+ 			<groupId>com.google.cloud</groupId>
+ 			<artifactId>google-cloud-storage</artifactId>
+ 		</dependency>
 
 
 
