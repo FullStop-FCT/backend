@@ -1,16 +1,14 @@
 package pt.unl.fct.di.apdc.helpinhand.api;
 
-import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
-import pt.unl.fct.di.apdc.helpinhand.api.User;
-
 public class Request {
 
 	
-	public AuthToken token;
-	public String userToDelete;
-	public User userData;
-	public String userToChange;
-	public String attribute;
+	private AuthToken token;
+	private String userToDelete;
+	private UsersData userData;
+	private ActivitiesData activityData;
+	private String userToChange;
+	private String attribute;
 	
 	private String username;
 
@@ -32,12 +30,17 @@ public class Request {
 		this.password = password;
 	}
 	
-	public Request(AuthToken token, User userData) {
+	public Request(AuthToken token, UsersData userData) {
 		this.token = token;
 		this.userData = userData;
 		//update
 	}
 	
+	
+	public Request(AuthToken token, ActivitiesData activityData) {
+		this.token=token;
+		this.activityData = activityData;
+	}
 	
 	public Request(AuthToken token, String userToChange, String attribute) {
 		this.token = token;
@@ -79,11 +82,11 @@ public class Request {
 		this.userToDelete = userToDelete;
 	}
 
-	public User getUserData() {
+	public UsersData getUserData() {
 		return userData;
 	}
 
-	public void setUserData(User userData) {
+	public void setUserData(UsersData userData) {
 		this.userData = userData;
 	}
 	
@@ -94,5 +97,21 @@ public class Request {
 
 	public String getPassword() {
 		return password;
+	}
+
+	public ActivitiesData getActivityData() {
+		return activityData;
+	}
+
+	public void setActivityData(ActivitiesData activityData) {
+		this.activityData = activityData;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 }

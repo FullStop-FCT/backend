@@ -13,6 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+
 import com.google.appengine.repackaged.org.apache.commons.codec.digest.DigestUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Datastore;
@@ -24,16 +25,22 @@ import com.google.cloud.datastore.Transaction;
 import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.Request;
-import pt.unl.fct.di.apdc.helpinhand.api.User;
+import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
+import pt.unl.fct.di.apdc.helpinhand.api.UserOrg;
 //import pt.unl.fct.di.apdc.helpinhand.api.service.RestUsers;
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
+import pt.unl.fct.di.apdc.helpinhand.util.Profile;
+import pt.unl.fct.di.apdc.helpinhand.util.Roles;
+import pt.unl.fct.di.apdc.helpinhand.util.State;
+import pt.unl.fct.di.apdc.helpinhand.util.Kinds;
+import pt.unl.fct.di.apdc.helpinhand.util.Verification;
 
 
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
 public class UserResource{ 
 	
-	Database data;
+	Database database = new Database();
 	
 
 	private static final Logger LOG = Logger.getLogger(UserResource.class.getName());
@@ -45,52 +52,62 @@ public class UserResource{
 	
 	private final Gson g = new Gson();
 	
+	private Transaction txn = datastore.newTransaction();
+	
+	private Verification verifier = new Verification();
 
 	public UserResource() {
-//		data = new Database();
+		
 	}
 	
-
-	
-
 
 	@POST
 	@Path("/insert") //register
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response doRegister(User userData) {
-		// TODO Auto-generated method stub
+	public Response doRegister(UsersData userData) {
 		LOG.warning("Attempt to register user " + userData.getUsername());
 		
-		if(! userData.validRegistration()) {
+		if(! verifier.validRegistration(userData)) {
+			LOG.warning("Failed verifier with a missing or wrong parameter.");
 			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
 		}
 		
-		Transaction txn = datastore.newTransaction();
-
 		try {
-			Key userKey = datastore.newKeyFactory()
-					.setKind("User")
-					.newKey(userData.getUsername());		
+			Key userKey = database.getUserKey(userData.getUsername());
 			Entity userEntity = txn.get(userKey);
-
 			if(userEntity != null) {
 				txn.rollback();
+				LOG.warning("The user already exists");
 				return Response.status(Status.BAD_REQUEST).entity("User already exists.").build();	
 			}else {
-				
 			//Entity user = datastore.get(userKey);	
+//				LOG.warning("DATA: " + userData.getEmail());
+//				LOG.warning("DATA: " + userData.getPhoneNumber());
+//				LOG.warning("DATA: " + userData.getMobileNumber());
+//				LOG.warning("DATA: " + userData.getLocation());
+//				LOG.warning("PROFILE: " + Profile.PRIVATE.toString());
+//				LOG.warning("STATE: " + userData.getState());
+//				LOG.warning("KIND: " + userData.getKind());
+//				LOG.warning("ROLE: " + userData.getRole());
+				
 				userEntity = Entity.newBuilder(userKey)
+						.set("user_name", userData.getName())
 						.set("user_email", userData.getEmail())
 						.set("user_pwd", DigestUtils.sha512Hex(userData.getPassword()))
-						.set("user_profile", userData.getProfile())
-						.set("user_phone_number", userData.getPhoneNumber())
-						.set("user_mobile_number", userData.getMobileNumber())
-						.set("user_address", userData.getAddress())
-						.set("user_extra_address", userData.getExtraAddress())
-						.set("location", userData.getLocation())
-						.set("user_role", "USER")
-						.set("user_state", "ENABLED")
+						.set("user_phone_number", "")
+						.set("user_mobile_number", "")
+						.set("user_address", "")
+//						.set("user_extra_address", "")
+						.set("user_location", "")
+						.set("user_postal_code", "")
+						.set("user_gender", "")
+						.set("user_birthday", "")
+						.set("user_kind", "")
+						.set("user_profile", Profile.PUBLIC.toString())
+						.set("user_state", State.ENABLED.toString())
+						.set("user_role", Roles.USER.toString())
 						.set("user_creation_time", Timestamp.now())
+						.set("last_time_modified", Timestamp.now())
 						.build();
 				txn.add(userEntity);
 				LOG.warning("User registered " + userData.getUsername());
@@ -102,48 +119,118 @@ public class UserResource{
 			
 		}catch(Exception e) {
 			txn.rollback();
+			LOG.warning("Something went wrong entered exception e: " + e.toString());
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}finally{
 			if(txn.isActive()) {
 				txn.rollback();
+				LOG.warning("Something went wrong entered finally.");
 				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 			}
 			
-		}
+		}	
+				
 	}
-
+	
+	
+	
+	//in here username is ONIF (O+NIF)
+	@POST
+	@Path("/insert_org")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response doRegisterOrg(UsersData userData) {
+		LOG.warning("Attempt to register org " + userData.getUsername());
+		
+		if(! verifier.validRegistration(userData)) {
+			LOG.warning("Failed verifier with a missing or wrong parameter.");
+			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+		}
+		
+		try {
+			Key orgKey = database.getOrgKey(userData.getUsername());
+			Entity orgEntity = txn.get(orgKey);
+			if(orgEntity != null) {
+				txn.rollback();
+				LOG.warning("The org already exists");
+				return Response.status(Status.BAD_REQUEST).entity("Org already exists.").build();	
+			}else {
+		
+				orgEntity = Entity.newBuilder(orgKey)
+						.set("user_name", userData.getName())
+						.set("user_email", userData.getEmail())
+						.set("user_pwd", DigestUtils.sha512Hex(userData.getPassword()))
+						.set("user_phone_number", "")
+						.set("user_mobile_number", "")
+						.set("user_address", "")
+//						.set("user_extra_address", "")
+						.set("user_location", "")
+						.set("user_postal_code", "")
+//						.set("user_gender", "")
+//						.set("user_birthday", "")
+						.set("user_kind", Kinds.ORGANIZATION.toString())
+						.set("user_profile", Profile.PUBLIC.toString())
+						.set("user_state", State.ENABLED.toString())
+						.set("user_role", Roles.USER.toString())
+						.set("user_creation_time", Timestamp.now())
+						.set("last_time_modified", Timestamp.now())
+						.build();
+				txn.add(orgEntity);
+				LOG.warning("Org registered " + userData.getUsername());
+				txn.commit();
+				
+				return Response.ok(" {} ").build();
+			}
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("Something went wrong entered exception e: " + e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}finally{
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("Something went wrong entered finally.");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+		}	
+	}
+	
+	
 	@PATCH
 //	@POST
 	@Path("/update")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response doUpdate(Request request) {
 		// TODO Auto-generated method stub
-		LOG.warning("Attempt to update user: "+ request.getUserData().getUsername());
+		LOG.warning("Attempt to update user: "+ request.getToken().getUsername());
 		
 		Transaction txn = datastore.newTransaction();
 		Key userKey = datastore.newKeyFactory()
 				.setKind("User")
-				.newKey(request.token.getUsername());
+				.newKey(request.getToken().getUsername());
 		Key tokenKey = datastore.newKeyFactory()
-				.addAncestor(PathElement.of("User", request.token.getUsername()))
+				.addAncestor(PathElement.of("User", request.getToken().getUsername()))
 				.setKind("Token")
-				.newKey(request.token.getTokenID());
+				.newKey(request.getToken().getTokenID());
 		try {
-			
+			 
 			Entity userEntity = txn.get(userKey);
 			Entity tokenEntity = txn.get(tokenKey);
 			
-			if(tokenEntity == null || System.currentTimeMillis() > request.token.getExpirationData()) {
+			if(tokenEntity == null || System.currentTimeMillis() > request.getToken().getExpirationData()) {
 				txn.rollback();
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
 			
-			if(userEntity.getString("user_role").equals("USER") && (!userEntity.getString("user_state").equals("DELETED") 
-					|| !userEntity.getString("user_state").equals("DISABLED")) ) {
+			if(userEntity.getString("user_role").equals(Roles.USER.toString()) && (!userEntity.getString("user_state").equals(State.DELETED.toString()) 
+					|| !userEntity.getString("user_state").equals(State.DISABLED.toString())) ) {
 				
-				String email= request.getUserData().validateEmail() ? request.getUserData().getEmail() : userEntity.getString("user_email");
+//				String email= request.getUserData().validateEmail() ? request.getUserData().getEmail() : userEntity.getString("user_email");
+	
+//				String email= verifier.validateEmail(request.getUserData().getEmail()) ? request.getUserData().getEmail() : userEntity.getString("user_email");
 				
 //				String password = data.getUserData().validatePassword() ? data.getUserData().getPassword() : userEntity.getString("user_password");
 				
@@ -161,29 +248,47 @@ public class UserResource{
 				String address = request.getUserData().getAddress() != null && !request.getUserData().getAddress().isEmpty()
 						? request.getUserData().getAddress() : userEntity.getString("user_address");
 				
-				String extraAddress = request.getUserData().getExtraAddress() != null && !request.getUserData().getExtraAddress().isEmpty()
-						? request.getUserData().getExtraAddress() : userEntity.getString("user_extra_address");
+//				String extraAddress = request.getUserData().getExtraAddress() != null && !request.getUserData().getExtraAddress().isEmpty()
+//						? request.getUserData().getExtraAddress() : userEntity.getString("user_extra_address");
 				
 				String location = request.getUserData().getLocation() != null &&  !request.getUserData().getLocation().isEmpty()
 						? request.getUserData().getLocation() : userEntity.getString("user_location");
 				
+				String postalCode = request.getUserData().getPostalCode() !=null && !request.getUserData().getPostalCode().isEmpty()
+						? request.getUserData().getPostalCode() : userEntity.getString("user_postalCode");
+				
+				String birthday = request.getUserData().getBirthday() !=null && !request.getUserData().getBirthday().isEmpty()
+						? request.getUserData().getBirthday() : userEntity.getString("user_birthday");
+				
+				String gender = request.getUserData().getGender() !=null && !request.getUserData().getGender().isEmpty()
+						? request.getUserData().getGender() : userEntity.getString("user_gender");
+				
+				String kind = request.getUserData().getKind() !=null && !request.getUserData().getKind().isEmpty()
+						? request.getUserData().getKind() : userEntity.getString("user_kind");
+				
+				
 				userEntity = Entity.newBuilder(datastore.get(userKey))
-						.set("user_email", email)
+//						.set("user_email", email)
 //						.set("user_pwd", userEntity.getString("user_pwd"))
 //						.set("user_pwd", password)
 						.set("user_profile", profile)
 						.set("user_phone_number", phoneNumber)
 						.set("user_mobile_number", mobileNumber)
 						.set("user_address", address)
-						.set("user_extra_address", extraAddress)
-						.set("location", location)
+//						.set("user_extra_address", extraAddress)
+						.set("user_location", location)
+						.set("user_postal_code", postalCode)
+						.set("user_birthday", birthday)
+						.set("user_gender", gender)
+						.set("user_kind", kind)
+						.set("last_time_modified", Timestamp.now())
 //						.set("user_role", userEntity.getString("user_role"))
 //						.set("user_state", userEntity.getString("user_state"))
 //						.set("user_creation_time", userEntity.getTimestamp("user_creation_time"))
 						.build();
 										
 				txn.update(userEntity);
-				LOG.warning("Self User updated: " + request.getUserData().getUsername());
+				LOG.warning("Self User updated: " + request.getToken().getUsername());
 				txn.commit();
 				return Response.ok(" {} ").build(); 
 				}
@@ -201,9 +306,186 @@ public class UserResource{
 				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 			}
 		}
-		LOG.warning("Failed update attempt for username: " + request.getUserData().getUsername());
+		LOG.warning("Failed update attempt for username: " + request.getToken().getUsername());
 		return Response.status(Status.BAD_REQUEST).entity("ups").build();
 	}
+	
+	
+	
+	
+	
+	
+//	@POST
+//	@Path("/insert") //register
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response doRegisterV2(User userData) {
+//		LOG.warning("Attempt to register user " + userData.getUsername());
+//		
+//		if(! verifier.validRegistration(userData)) {
+//			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+//		}
+//		
+//		try {
+//			Key userKey = database.getUserKey(userData.getUsername());
+//			Entity userEntity = txn.get(userKey);
+//			if(userEntity != null) {
+//				txn.rollback();
+//				return Response.status(Status.BAD_REQUEST).entity("User already exists.").build();	
+//			}else {
+//				
+//			//Entity user = datastore.get(userKey);	
+//				userEntity = Entity.newBuilder(userKey)
+//						.set("user_email", userData.getEmail())
+//						.set("user_pwd", DigestUtils.sha512Hex(userData.getPassword()))
+//						.set("user_profile", userData.getProfile())
+//						.set("user_phone_number", userData.getPhoneNumber())
+//						.set("user_mobile_number", userData.getMobileNumber())
+//						.set("user_address", userData.getAddress())
+//						.set("user_extra_address", userData.getExtraAddress())
+//						.set("user_location", userData.getLocation())
+//						.set("user_role", "USER")
+//						.set("user_state", "ENABLED")
+//						.set("user_creation_time", Timestamp.now())
+//						.build();
+//				txn.add(userEntity);
+//				LOG.warning("User registered " + userData.getUsername());
+//				txn.commit();
+//				
+//				return Response.ok(" {} ").build();
+//			}
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//		}finally{
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//			
+//		}	
+//				
+//	}
+
+//	@POST
+//	@Path("/insert") //register
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response doRegister(User userData) {
+//		// TODO Auto-generated method stub
+//		LOG.warning("Attempt to register user " + userData.getUsername());
+//		
+//		if(! userData.validRegistration()) {
+//			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+//		}
+//		
+//		Transaction txn = datastore.newTransaction();
+//
+//		try {
+//			Key userKey = datastore.newKeyFactory()
+//					.setKind("User")
+//					.newKey(userData.getUsername());		
+//			Entity userEntity = txn.get(userKey);
+//
+//			if(userEntity != null) {
+//				txn.rollback();
+//				return Response.status(Status.BAD_REQUEST).entity("User already exists.").build();	
+//			}else {
+//				
+//			//Entity user = datastore.get(userKey);	
+//				userEntity = Entity.newBuilder(userKey)
+//						.set("user_email", userData.getEmail())
+//						.set("user_pwd", DigestUtils.sha512Hex(userData.getPassword()))
+//						.set("user_profile", userData.getProfile())
+//						.set("user_phone_number", userData.getPhoneNumber())
+//						.set("user_mobile_number", userData.getMobileNumber())
+//						.set("user_address", userData.getAddress())
+//						.set("user_extra_address", userData.getExtraAddress())
+//						.set("location", userData.getLocation())
+//						.set("user_role", "USER")
+//						.set("user_state", "ENABLED")
+//						.set("user_creation_time", Timestamp.now())
+//						.build();
+//				txn.add(userEntity);
+//				LOG.warning("User registered " + userData.getUsername());
+//				txn.commit();
+//				
+//				return Response.ok(" {} ").build();
+//			}
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//		}finally{
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//			
+//		}
+//	}
+	
+//	@POST
+//	@Path("/insertorg") //register
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response doRegisterOrg(UserOrg orgData) {
+//		// TODO Auto-generated method stub
+//		LOG.warning("Attempt to register Organization " + orgData.getUsername());
+//		
+//		if(! verifier.validRegistration(orgData)) {
+//			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+//		}
+//		
+//		Transaction txn = datastore.newTransaction();
+//
+//		try {
+//			Key userKey = datastore.newKeyFactory()
+//					.setKind("User")
+//					.newKey(orgData.getUsername());		
+//			Entity userEntity = txn.get(userKey);
+//
+//			if(userEntity != null) {
+//				txn.rollback();
+//				return Response.status(Status.BAD_REQUEST).entity("Organization already exists.").build();	
+//			}else {
+//				
+//			//Entity user = datastore.get(userKey);	
+//				userEntity = Entity.newBuilder(userKey)
+//						.set("user_email", orgData.getEmail())
+//						.set("user_pwd", DigestUtils.sha512Hex(orgData.getPassword()))
+//						.set("user_profile", orgData.getProfile())
+//						.set("user_phone_number", orgData.getPhoneNumber())
+//						.set("user_mobile_number", orgData.getMobileNumber())
+//						.set("user_address", orgData.getAddress())
+//						.set("user_extra_address", orgData.getExtraAddress())
+//						.set("location", orgData.getLocation())
+//						.set("nif", orgData.getNif())
+//						.set("user_role", "USER")
+//						.set("user_state", "ENABLED")
+//						.set("user_creation_time", Timestamp.now())
+//						.build();
+//				txn.add(userEntity);
+//				LOG.warning("User registered " + orgData.getUsername());
+//				txn.commit();
+//				
+//				return Response.ok(" {} ").build();
+//			}
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//		}finally{
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//			
+//		}
+//	}
+
+
 
 
 	public Response doRoleChange(Request request) {
