@@ -100,6 +100,7 @@ public class AuthenticationResource {
 //						.set("user_last_login", Timestamp.now())
 //						.build();
 //			}
+			
 //			
 			String hashedPWD = user.getString("user_pwd");
 			if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {

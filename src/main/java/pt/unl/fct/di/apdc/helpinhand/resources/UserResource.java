@@ -24,6 +24,7 @@ import com.google.cloud.datastore.PathElement;
 import com.google.cloud.datastore.Transaction;
 import com.google.gson.Gson;
 
+import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
 import pt.unl.fct.di.apdc.helpinhand.api.Request;
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
 import pt.unl.fct.di.apdc.helpinhand.api.UserOrg;
@@ -309,6 +310,8 @@ public class UserResource{
 		LOG.warning("Failed update attempt for username: " + request.getToken().getUsername());
 		return Response.status(Status.BAD_REQUEST).entity("ups").build();
 	}
+	
+	
 	
 	
 	

@@ -10,21 +10,24 @@ public class ActivitiesData {
 	private String description;
 	private String date;
 	private String location;
-	private int totalParticipants;
+	private long totalParticipants;
 	private String activityOwner;
+	private String category;
 	private List<String> participants;
+	private long ID;
 	
 	
 	public ActivitiesData() {
 		
 	}
 	
-	public ActivitiesData(String title, String description, String date, String location, int totalParticipants, String activityOwner) {
+	public ActivitiesData(String title, String description, String date, String location, long totalParticipants, String activityOwner, String category) {
 		this.title=title;
 		this.description=description;
 		this.date=date;
 		this.location=location;
-		this.totalParticipants=totalParticipants;		
+		this.totalParticipants=totalParticipants;
+		this.category = category;
 //		this.participants = new ArrayList<>(totalParticipants);
 		this.activityOwner=activityOwner;
 		
@@ -71,12 +74,12 @@ public class ActivitiesData {
 	}
 
 
-	public int getTotalParticipants() {
+	public long getTotalParticipants() {
 		return totalParticipants;
 	}
 
 
-	public void setTotalParticipants(int peopleNumber) {
+	public void setTotalParticipants(long peopleNumber) {
 		this.totalParticipants = peopleNumber;
 	}
 
@@ -109,4 +112,21 @@ public class ActivitiesData {
 	public void setActivityOwner(String activityOwner) {
 		this.activityOwner = activityOwner;
 	}
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+
+	public long getID() {
+		return ID;
+	}
+
+	public void setID(long iD) {
+		ID = iD;
+	}
+
 }

@@ -2,6 +2,9 @@ package pt.unl.fct.di.apdc.helpinhand.resources;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
@@ -12,15 +15,23 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.PathElement;
+import com.google.cloud.datastore.Query;
+import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.Transaction;
+import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
+import com.google.cloud.datastore.StructuredQuery.OrderBy;
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.gson.Gson;
 
+import pt.unl.fct.di.apdc.helpinhand.api.ActivitiesData;
+import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
 import pt.unl.fct.di.apdc.helpinhand.api.Request;
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
 
@@ -55,7 +66,7 @@ public class ActivityResource {
 //		Transaction txn = datastore.newTransaction();
 //		Key orgKey = database.getOrgKey(request.getToken().getUsername());
 		Key tokenKey = database.getTokenKey(request.getToken());
-		
+		 
 		
 		try {
 //			Entity orgEntity=txn.get(orgKey);
@@ -65,7 +76,7 @@ public class ActivityResource {
 				txn.rollback();
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
-			}
+			} 
 			Key activityKey = database.getActivityKey(request.getActivityData());
 //			Key activityKey = factory
 //					.addAncestor(PathElement.of("User", request.getActivityData().getActivityOwner()))
@@ -87,6 +98,7 @@ public class ActivityResource {
 						.set("activity_location", request.getActivityData().getLocation())
 						.set("activity_total_participants", request.getActivityData().getTotalParticipants())
 //						.set("activity_participants", request.getActivityData().getList());
+						.set("activity_category", request.getActivityData().getCategory())
 						.set("activity_owner", request.getToken().getUsername())
 						.build();
 				
@@ -111,6 +123,94 @@ public class ActivityResource {
 		}
 		
 //		return null;
+	}
+	
+	
+	
+	@POST
+	@Path("/list")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doListUsers(AuthToken token) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		
+		try {
+			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+//			Calendar cal = Calendar.getInstance();
+//			Timestamp today = Timestamp.of(cal.getTime());
+			
+			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//									.setKind("Activity")
+//									.setFilter(
+//											CompositeFilter.and(
+//													PropertyFilter.hasAncestor(
+//															datastore.newKeyFactory().setKind("User").newKey(token.getUsername())),
+//													PropertyFilter.ge("activity_date", today)
+//													)
+//											)
+//									.setOrderBy(OrderBy.desc("activity_date"))
+//									.setLimit(10)
+//									.build();
+			
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+					.setFilter(
+									PropertyFilter.hasAncestor(
+											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
+							)
+					.setOrderBy(OrderBy.desc("activity_title"))
+					.setLimit(10)
+					.build();
+										
+						
+			QueryResults<Entity> titlesQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			titlesQuery.forEachRemaining(activity -> {
+				ActivitiesData nextActivity = new ActivitiesData();
+//				nextActivity.s(activity.getKey().getId())
+				nextActivity.setID(activity.getKey().getId());
+				nextActivity.setTitle(activity.getString("activity_title"));
+				nextActivity.setDescription(activity.getString("activity_description"));
+				nextActivity.setCategory(activity.getString("activity_category"));
+				nextActivity.setLocation(activity.getString("activity_location"));
+				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
+				nextActivity.setDate(activity.getString("activity_date"));
+				nextActivity.setActivityOwner(activity.getString("activity_owner"));
+				
+				activities.add(nextActivity);
+			});
+			
+			
+			txn.commit();
+//			return Response.ok(" {} ").build();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
 	}
 	
 }

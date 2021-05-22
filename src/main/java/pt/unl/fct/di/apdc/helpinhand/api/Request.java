@@ -4,9 +4,11 @@ public class Request {
 
 	
 	private AuthToken token;
-	private String userToDelete;
 	private UsersData userData;
 	private ActivitiesData activityData;
+	private RoutesData routeData;
+	
+	private String userToDelete;
 	private String userToChange;
 	private String attribute;
 	
@@ -40,6 +42,11 @@ public class Request {
 	public Request(AuthToken token, ActivitiesData activityData) {
 		this.token=token;
 		this.activityData = activityData;
+	}
+	
+	public Request(AuthToken token, RoutesData routeData) {
+		this.token=token;
+		this.setRouteData(routeData);
 	}
 	
 	public Request(AuthToken token, String userToChange, String attribute) {
@@ -105,6 +112,14 @@ public class Request {
 
 	public void setActivityData(ActivitiesData activityData) {
 		this.activityData = activityData;
+	}
+
+	public RoutesData getRouteData() {
+		return routeData;
+	}
+
+	public void setRouteData(RoutesData routeData) {
+		this.routeData = routeData;
 	}
 
 	public void setUsername(String username) {

@@ -59,14 +59,22 @@ public class Database {
 	
 	
 	public Key getActivityKey(ActivitiesData data) {
-		Key activityKey = factory
+		Key activityKey = datastore.allocateId(factory
 				.addAncestor(PathElement.of("User", data.getActivityOwner()))
 				.setKind("Activity")
-				.newKey(data.getTitle());
+				.newKey()) ;
 		
 		return activityKey;
 	}
 	
+	
+	public Key getRouteKey() {
+		Key routesKey = datastore.allocateId(factory
+				.setKind("Route")
+				.newKey());
+		
+		return routesKey;
+	}
 //	
 //	public Result<String> doRegister(User userData) throws WebApplicationException{
 //		

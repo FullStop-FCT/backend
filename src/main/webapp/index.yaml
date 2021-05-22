@@ -1,0 +1,7 @@
+indexes:
+
+- kind: Activity
+  ancestor: yes
+  properties:
+  - name: activity_title
+    direction: desc
