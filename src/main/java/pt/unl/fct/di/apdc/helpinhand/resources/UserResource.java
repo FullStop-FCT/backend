@@ -372,9 +372,18 @@ public class UserResource{
 			List<UsersData> users = new ArrayList<>();
 			
 			results.forEachRemaining(user -> {
-				
-				
 				UsersData newUser = new UsersData();
+				
+				if(userEntity.getString("user_kind").equals(Kinds.ORGANIZATION.toString())) {
+
+					newUser.setUsername(userEntity.getKey().getName());
+					newUser.setName(userEntity.getString("user_name"));
+					newUser.setEmail(userEntity.getString("user_email"));
+					users.add(newUser);
+				}
+				else {
+				
+				
 				newUser.setUsername(userEntity.getKey().getName());
 				newUser.setName(userEntity.getString("user_name"));
 				newUser.setEmail(userEntity.getString("user_email"));
@@ -388,6 +397,8 @@ public class UserResource{
 				newUser.setGender(userEntity.getString("user_gender"));
 				
 				users.add(newUser);
+				}
+				
 			});
 			
 //			Query<Entity> query = Query.newEntityQueryBuilder()
