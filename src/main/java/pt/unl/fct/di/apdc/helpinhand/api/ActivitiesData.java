@@ -3,6 +3,7 @@ package pt.unl.fct.di.apdc.helpinhand.api;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 public class ActivitiesData {
 
@@ -14,7 +15,7 @@ public class ActivitiesData {
 	private String activityOwner;
 	private String category;
 	private List<String> participants;
-	private long ID;
+	private String ID;
 	
 	
 	public ActivitiesData() {
@@ -22,6 +23,8 @@ public class ActivitiesData {
 	}
 	
 	public ActivitiesData(String title, String description, String date, String location, long totalParticipants, String activityOwner, String category) {
+//		this.ID = UUID.randomUUID().fromString(title).toString();
+		this.ID = UUID.randomUUID().randomUUID().toString();
 		this.title=title;
 		this.description=description;
 		this.date=date;
@@ -121,11 +124,11 @@ public class ActivitiesData {
 		this.category = category;
 	}
 
-	public long getID() {
+	public String getID() {
 		return ID;
 	}
 
-	public void setID(long iD) {
+	public void setID(String iD) {
 		ID = iD;
 	}
 

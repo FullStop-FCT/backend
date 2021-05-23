@@ -28,6 +28,7 @@ import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.PathElement;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.StructuredQuery;
 import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.OrderBy;
@@ -81,12 +82,18 @@ public class ActivityResource {
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
 			} 
-			Key activityKey = database.getActivityKey(request.getActivityData());
-//			Key activityKey = factory
-//					.addAncestor(PathElement.of("User", request.getActivityData().getActivityOwner()))
-//					.setKind("Activity")
-//					.newKey(request.getActivityData().getTitle());
-			
+//			Key activityKey = database.getActivityKey(request.getActivityData());
+			ActivitiesData act = new ActivitiesData(request.getActivityData().getTitle(), 
+					request.getActivityData().getDescription(),
+					request.getActivityData().getDate(), 
+					request.getActivityData().getLocation(),
+					request.getActivityData().getTotalParticipants(),
+					request.getActivityData().getActivityOwner(),
+					request.getActivityData().getCategory());
+			Key activityKey = factory
+					.addAncestor(PathElement.of("User", request.getActivityData().getActivityOwner()))
+					.setKind("Activity")
+					.newKey(act.getTitle());
 			
 			Entity activityEntity=txn.get(activityKey);
 			
@@ -186,7 +193,7 @@ public class ActivityResource {
 			titlesQuery.forEachRemaining(activity -> {
 				ActivitiesData nextActivity = new ActivitiesData();
 //				nextActivity.s(activity.getKey().getId())
-				nextActivity.setID(activity.getKey().getId());
+//				nextActivity.setID(activity.getKey().getName());
 				nextActivity.setTitle(activity.getString("activity_title"));
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
@@ -239,8 +246,8 @@ public class ActivityResource {
 											datastore.newKeyFactory().setKind("User").newKey(username))
 							)
 //					.setOrderBy(OrderBy.desc("activity_title"))
-					.setFilter(PropertyFilter.eq("activity_title", title))
-					.setLimit(1)
+					.setFilter(
+							StructuredQuery.PropertyFilter.eq("activity_title", title))
 					.build();
 										
 						
@@ -254,7 +261,7 @@ public class ActivityResource {
 			titlesQuery.forEachRemaining(activity -> {
 //				ActivitiesData nextActivity = new ActivitiesData();
 //				nextActivity.s(activity.getKey().getId())
-				nextActivity.setID(activity.getKey().getId());
+//				nextActivity.setID(activity.getKey().getId());
 				nextActivity.setTitle(activity.getString("activity_title"));
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
