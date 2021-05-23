@@ -2,12 +2,16 @@ package pt.unl.fct.di.apdc.helpinhand.resources;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -21,7 +25,10 @@ import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.PathElement;
+import com.google.cloud.datastore.Query;
+import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.Transaction;
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
@@ -313,8 +320,212 @@ public class UserResource{
 	
 	
 	
+	@POST
+	@Path("/get/{username}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUser(AuthToken token, @PathParam("username") String username) {
+		
+		 
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		Key userKey = datastore.newKeyFactory()
+				.setKind("User")
+				.newKey(username);
+
+		
+		try {
+			Entity userEntity = txn.get(userKey);
+			
+			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+//			Key userKey = database.getUserKey(username);
+			
+			
+			
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("User")
+					.build();
+			
+			QueryResults<Entity> results = datastore.run(query);
+
+			List<UsersData> users = new ArrayList<>();
+			
+			results.forEachRemaining(user -> {
+				
+				
+				UsersData newUser = new UsersData();
+				newUser.setUsername(userEntity.getKey().getName());
+				newUser.setName(userEntity.getString("user_name"));
+				newUser.setEmail(userEntity.getString("user_email"));
+				newUser.setProfile(userEntity.getString("user_profile"));
+				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+				newUser.setAddress(userEntity.getString("user_address"));
+				newUser.setLocation(userEntity.getString("user_location"));
+				newUser.setPostalCode(userEntity.getString("user_postal_code"));
+				newUser.setBirthday(userEntity.getString("user_birthday"));
+				newUser.setGender(userEntity.getString("user_gender"));
+				
+				users.add(newUser);
+			});
+			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("User")
+//					.
+			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//						.setKind("User")
+//						.build();
+//			query.newProjectionEntityQueryBuilder()
+//			.addProjection("user_name", userEntity.getString("user_name"));
+			
+//			List<Entity> res = datastore.run(query);
+//			
+			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("User")
+//					.setFilter(PropertyFilter.eq(userEntity.getKey().toString(), username))
+//					.build();
+			
+//			Query<ProjectionEntity> query = Query.newProjectionEntityQueryBuilder()
+//					.setKind("User")
+//					.setProjection(username, null)
+			
+//			UsersData newUser = new UsersData();
+//			newUser.setUsername(userEntity.getKey().getId().toString());
+//			newUser.setName(userEntity.getString("user_name"));
+//			newUser.setEmail(userEntity.getString("user_email"));
+//			newUser.setProfile(userEntity.getString("user_profile"));
+//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//			newUser.setAddress(userEntity.getString("user_address"));
+//			newUser.setLocation(userEntity.getString("user_location"));
+//			newUser.setPostalCode(userEntity.getString("user_postal_code"));
+//			newUser.setBirthday(userEntity.getString("user_birthday"));
+//			newUser.setGender(userEntity.getString("user_gender"));
+//			users.get(0);
+			txn.commit();
+;			return Response.status(Status.OK).entity(g.toJson(users.get(0))).build();
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
 	
-	
+
+	@GET
+	@Path("/{username}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUserNoLogin( @PathParam("username") String username) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+//		Key tokenKey = database.getTokenKey(token);
+		
+//		Entity tokenEntity = txn.get(tokenKey);
+		
+		try {
+			
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			Key userKey = database.getUserKey(username);
+			
+			Entity userEntity = txn.get(userKey);
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//						.setKind("User")
+//						.build();
+//			query.newProjectionEntityQueryBuilder()
+//			.addProjection("user_name", userEntity.getString("user_name"));
+			
+//			List<Entity> res = datastore.run(query);
+//			
+			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("User")
+//					.setFilter(PropertyFilter.eq(userEntity.getKey().toString(), username))
+//					.build();
+			
+//			Query<ProjectionEntity> query = Query.newProjectionEntityQueryBuilder()
+//					.setKind("User")
+//					.setProjection(username, null)
+			
+//			UsersData newUser = new UsersData();
+//			newUser.setUsername(userEntity.getKey().getId().toString());
+//			newUser.setName(userEntity.getString("user_name"));
+//			newUser.setEmail(userEntity.getString("user_email"));
+//			newUser.setProfile(userEntity.getString("user_profile"));
+//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//			newUser.setAddress(userEntity.getString("user_address"));
+//			newUser.setLocation(userEntity.getString("user_location"));
+//			newUser.setPostalCode(userEntity.getString("user_postal_code"));
+//			newUser.setBirthday(userEntity.getString("user_birthday"));
+//			newUser.setGender(userEntity.getString("user_gender"));
+			
+			return Response.status(Status.OK).entity(g.toJson(userEntity)).build();
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
 	
 	
 	
@@ -490,6 +701,8 @@ public class UserResource{
 
 
 
+	
+	
 
 	public Response doRoleChange(Request request) {
 		// TODO Auto-generated method stub
