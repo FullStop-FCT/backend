@@ -56,9 +56,11 @@ public class AuthenticationResource {
 	@Path("/login")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doLogin(Request request, 
-			@Context HttpServletRequest req, 
-			@Context HttpHeaders headers) {
+//	public Response doLogin(Request request, 
+//			@Context HttpServletRequest req, 
+//			@Context HttpHeaders headers) {
+		public Response doLogin(Request request
+				) {
 		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
 		
 		Key userKey = datastore.newKeyFactory()
@@ -69,11 +71,11 @@ public class AuthenticationResource {
 //		Key ctrsKey = datastore.newKeyFactory()
 //				.addAncestors(PathElement.of("User", request.getUsername()))
 //				.setKind("UserStats").newKey("counters");
-		Key logKey = datastore.allocateId(
-				datastore.newKeyFactory()
-				.addAncestor(PathElement.of("User", request.getUsername()))
-				.setKind("UserLog").newKey()
-				);
+//		Key logKey = datastore.allocateId(
+//				datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("User", request.getUsername()))
+//				.setKind("UserLog").newKey()
+//				);
 //		-----
 		
 		Transaction txn = datastore.newTransaction();
@@ -105,18 +107,18 @@ public class AuthenticationResource {
 			String hashedPWD = user.getString("user_pwd");
 			if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
 				//added
-				Entity log = Entity.newBuilder(logKey)
-						.set("user_login_ip", req.getRemoteAddr())
-						.set("user_login_host", req.getRemoteHost())
-						.set("user_login_latlon", 
-								//does not index this property value
-								StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
-								.setExcludeFromIndexes(true).build()
-								) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
-						.set("user_login_city", headers.getHeaderString("X-Appengine-City")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
-						.set("user_login_country", headers.getHeaderString("X-Appengine-Country")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
-						.set("user_login_time", Timestamp.now())
-						.build();
+//				Entity log = Entity.newBuilder(logKey)
+//						.set("user_login_ip", req.getRemoteAddr())
+//						.set("user_login_host", req.getRemoteHost())
+//						.set("user_login_latlon", 
+//								//does not index this property value
+//								StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
+//								.setExcludeFromIndexes(true).build()
+//								) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
+//						.set("user_login_city", headers.getHeaderString("X-Appengine-City")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
+//						.set("user_login_country", headers.getHeaderString("X-Appengine-Country")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
+//						.set("user_login_time", Timestamp.now())
+//						.build();
 //				 -----
 				AuthToken token = new AuthToken(request.getUsername(),user.getString("user_role"));
 				Key tokenKey = datastore.newKeyFactory()
@@ -130,7 +132,8 @@ public class AuthenticationResource {
 						.set("token_expirationData", token.getExpirationData())
 						.set("token_role", token.getRole())
 						.build();
-				txn.put(log,tokenEntity); //changed
+//				txn.put(log,tokenEntity); //changed
+				txn.put(tokenEntity); //changed
 				LOG.warning("WARNING: User '" + request.getUsername() + "'logged in successfully.");
 				txn.commit();
 				return Response.ok(g.toJson(token)).build();

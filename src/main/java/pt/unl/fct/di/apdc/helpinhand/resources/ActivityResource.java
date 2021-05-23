@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -229,6 +230,8 @@ public class ActivityResource {
 		
 		
 		try {
+			
+			
 			Query<Entity> query = Query.newEntityQueryBuilder()
 					.setKind("Activity")
 					.setFilter(
@@ -297,4 +300,75 @@ public class ActivityResource {
 		
 	}
 	
+	
+	
+	@DELETE
+	@Path("/delete/{title}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response doDelete(AuthToken token, @PathParam("title") String title) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		try {
+			
+			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+					.setFilter(
+									PropertyFilter.hasAncestor(
+											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
+							)
+//					.setOrderBy(OrderBy.desc("activity_title"))
+					.setFilter(PropertyFilter.eq("activity_title", title))
+					.setLimit(1)
+					.build();
+			
+			QueryResults<Entity> titlesQuery = datastore.run(query);
+			
+			
+			
+			titlesQuery.forEachRemaining(activity -> {
+//				Entity activityEntity= txn.get(activity.getKey());
+//				Entity deletedEntity = Entity.newBuilder(activityEntity).build();
+//				txn.put(deletedEntity);
+				Entity deleted = txn.get(activity.getKey());
+				if(deleted.equals(null)) {
+					txn.rollback();
+					LOG.warning("No such activity");
+				}
+				txn.delete(activity.getKey());
+			});
+			
+			txn.commit();
+			return Response.ok(" {} ").build(); 
+			
+//			if(activityKey.equals(null)) {
+//				txn.rollback();
+//				LOG.warning("No such activity");
+//				return Response.status(Status.BAD_REQUEST).entity("No such activity.").build();
+//			}
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+		
+	}
 }
