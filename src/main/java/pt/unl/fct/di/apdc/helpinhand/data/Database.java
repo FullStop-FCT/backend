@@ -25,31 +25,32 @@ public class Database {
 
 	private static final Logger LOG = Logger.getLogger(Database.class.getName());
 	
-	private KeyFactory factory = datastore.newKeyFactory();
 	
 	public Database() {
 		
 	}
 	
 	
+	
 	public Key getUserKey(String username) {
-		Key userKey = factory
+		Key userKey = datastore.newKeyFactory()
 				.setKind("User")
 				.newKey(username);
 		return userKey;
 	}
 	
 	
+	
 	public Key getOrgKey(String nif) {
-		Key orgKey = factory
+		Key orgKey = datastore.newKeyFactory()
 				.setKind("User")
-				.newKey("O"+nif);
+				.newKey(nif);
 		return orgKey;
 	}
 	
 	
 	public Key getTokenKey(AuthToken token) {
-		Key tokenKey = factory
+		Key tokenKey = datastore.newKeyFactory()
 				.addAncestor(PathElement.of("User", token.getUsername()))
 				.setKind("Token")
 				.newKey(token.getTokenID());
@@ -59,7 +60,7 @@ public class Database {
 	
 	
 	public Key getActivityKey(ActivitiesData data) {
-		Key activityKey = datastore.allocateId(factory
+		Key activityKey = datastore.allocateId(datastore.newKeyFactory()
 				.addAncestor(PathElement.of("User", data.getActivityOwner()))
 				.setKind("Activity")
 				.newKey()) ;
@@ -69,7 +70,7 @@ public class Database {
 	
 	
 	public Key getRouteKey() {
-		Key routesKey = datastore.allocateId(factory
+		Key routesKey = datastore.allocateId(datastore.newKeyFactory()
 				.setKind("Route")
 				.newKey());
 		

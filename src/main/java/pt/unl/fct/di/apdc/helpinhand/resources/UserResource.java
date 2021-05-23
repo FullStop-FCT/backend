@@ -332,9 +332,8 @@ public class UserResource{
 		Key tokenKey = database.getTokenKey(token);
 		
 		Entity tokenEntity = txn.get(tokenKey);
-		Key userKey = datastore.newKeyFactory()
-				.setKind("User")
-				.newKey(username);
+		
+		Key userKey = database.getUserKey(username);
 
 		
 		try {
@@ -345,10 +344,6 @@ public class UserResource{
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
 			}
-			
-//			Key userKey = database.getUserKey(username);
-			
-			
 			
 			
 			if(userEntity == null) {
@@ -363,15 +358,15 @@ public class UserResource{
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("User")
-					.build();
-			
-			QueryResults<Entity> results = datastore.run(query);
-
-			List<UsersData> users = new ArrayList<>();
-			
-			results.forEachRemaining(user -> {
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("User")
+//					.build();
+//			
+//			QueryResults<Entity> results = datastore.run(query);
+//
+//			List<UsersData> users = new ArrayList<>();
+//			
+//			results.forEachRemaining(user -> {
 				UsersData newUser = new UsersData();
 				
 				if(userEntity.getString("user_kind").equals(Kinds.ORGANIZATION.toString())) {
@@ -379,7 +374,13 @@ public class UserResource{
 					newUser.setUsername(userEntity.getKey().getName());
 					newUser.setName(userEntity.getString("user_name"));
 					newUser.setEmail(userEntity.getString("user_email"));
-					users.add(newUser);
+					newUser.setProfile(userEntity.getString("user_profile"));
+					newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+					newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+					newUser.setAddress(userEntity.getString("user_address"));
+					newUser.setLocation(userEntity.getString("user_location"));
+					newUser.setPostalCode(userEntity.getString("user_postal_code"));
+//					users.add(newUser);
 				}
 				else {
 				
@@ -396,10 +397,10 @@ public class UserResource{
 				newUser.setBirthday(userEntity.getString("user_birthday"));
 				newUser.setGender(userEntity.getString("user_gender"));
 				
-				users.add(newUser);
+//				users.add(newUser);
 				}
 				
-			});
+//			});
 			
 //			Query<Entity> query = Query.newEntityQueryBuilder()
 //					.setKind("User")
@@ -437,7 +438,7 @@ public class UserResource{
 //			newUser.setGender(userEntity.getString("user_gender"));
 //			users.get(0);
 			txn.commit();
-;			return Response.status(Status.OK).entity(g.toJson(users.get(0))).build();
+			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
 			
 			
 		}catch(Exception e) {
@@ -456,27 +457,20 @@ public class UserResource{
 	
 
 	@GET
-	@Path("/{username}")
+	@Path("/user/{username}")
 //	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetUserNoLogin( @PathParam("username") String username) {
+	public Response doGetUserNoLogin(@PathParam("username") String username) {
+		
 		
 		Transaction txn = datastore.newTransaction();
-		
+		Key userKey = database.getUserKey(username);
 //		Key tokenKey = database.getTokenKey(token);
 		
 //		Entity tokenEntity = txn.get(tokenKey);
 		
 		try {
-			
-//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
-//				txn.rollback();
-//				LOG.warning("Token Authentication Failed");
-//				return Response.status(Status.FORBIDDEN).build();
-//			}
-			
-			Key userKey = database.getUserKey(username);
-			
+				
 			Entity userEntity = txn.get(userKey);
 			
 			if(userEntity == null) {
@@ -491,38 +485,38 @@ public class UserResource{
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-//			Query<Entity> query = Query.newEntityQueryBuilder()
-//						.setKind("User")
-//						.build();
-//			query.newProjectionEntityQueryBuilder()
-//			.addProjection("user_name", userEntity.getString("user_name"));
+			UsersData newUser = new UsersData();
 			
-//			List<Entity> res = datastore.run(query);
-//			
+			if(userEntity.getString("user_kind").equals(Kinds.ORGANIZATION.toString())) {
+
+				newUser.setUsername(userEntity.getKey().getName());
+				newUser.setName(userEntity.getString("user_name"));
+				newUser.setEmail(userEntity.getString("user_email"));
+				newUser.setProfile(userEntity.getString("user_profile"));
+				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+				newUser.setAddress(userEntity.getString("user_address"));
+				newUser.setLocation(userEntity.getString("user_location"));
+				newUser.setPostalCode(userEntity.getString("user_postal_code"));
+				
+			}
+			else {
 			
-//			Query<Entity> query = Query.newEntityQueryBuilder()
-//					.setKind("User")
-//					.setFilter(PropertyFilter.eq(userEntity.getKey().toString(), username))
-//					.build();
 			
-//			Query<ProjectionEntity> query = Query.newProjectionEntityQueryBuilder()
-//					.setKind("User")
-//					.setProjection(username, null)
-			
-//			UsersData newUser = new UsersData();
-//			newUser.setUsername(userEntity.getKey().getId().toString());
-//			newUser.setName(userEntity.getString("user_name"));
-//			newUser.setEmail(userEntity.getString("user_email"));
-//			newUser.setProfile(userEntity.getString("user_profile"));
-//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
-//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
-//			newUser.setAddress(userEntity.getString("user_address"));
-//			newUser.setLocation(userEntity.getString("user_location"));
-//			newUser.setPostalCode(userEntity.getString("user_postal_code"));
-//			newUser.setBirthday(userEntity.getString("user_birthday"));
-//			newUser.setGender(userEntity.getString("user_gender"));
-			
-			return Response.status(Status.OK).entity(g.toJson(userEntity)).build();
+			newUser.setUsername(userEntity.getKey().getName());
+			newUser.setName(userEntity.getString("user_name"));
+			newUser.setEmail(userEntity.getString("user_email"));
+			newUser.setProfile(userEntity.getString("user_profile"));
+			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+			newUser.setAddress(userEntity.getString("user_address"));
+			newUser.setLocation(userEntity.getString("user_location"));
+			newUser.setPostalCode(userEntity.getString("user_postal_code"));
+			newUser.setBirthday(userEntity.getString("user_birthday"));
+			newUser.setGender(userEntity.getString("user_gender"));
+			}
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
 			
 			
 		}catch(Exception e) {
