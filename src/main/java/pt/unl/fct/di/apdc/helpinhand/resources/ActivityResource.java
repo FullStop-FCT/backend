@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -19,6 +21,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.IncompleteKey;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.PathElement;
@@ -210,6 +213,87 @@ public class ActivityResource {
 				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 			}
 		}
+		
+	}
+	
+	
+	
+	@GET
+	@Path("/get/{username}/{title}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response goGetActivity(@PathParam ("username") String username, @PathParam("title") String title) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+				
+		
+		
+		try {
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+					.setFilter(
+									PropertyFilter.hasAncestor(
+											datastore.newKeyFactory().setKind("User").newKey(username))
+							)
+//					.setOrderBy(OrderBy.desc("activity_title"))
+					.setFilter(PropertyFilter.eq("activity_title", title))
+					.setLimit(1)
+					.build();
+										
+						
+			QueryResults<Entity> titlesQuery = datastore.run(query);
+
+//			titlesQuery.g
+			
+//			List<ActivitiesData> activities = new ArrayList<>();
+			ActivitiesData nextActivity = new ActivitiesData();
+			
+			titlesQuery.forEachRemaining(activity -> {
+//				ActivitiesData nextActivity = new ActivitiesData();
+//				nextActivity.s(activity.getKey().getId())
+				nextActivity.setID(activity.getKey().getId());
+				nextActivity.setTitle(activity.getString("activity_title"));
+				nextActivity.setDescription(activity.getString("activity_description"));
+				nextActivity.setCategory(activity.getString("activity_category"));
+				nextActivity.setLocation(activity.getString("activity_location"));
+				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
+				nextActivity.setDate(activity.getString("activity_date"));
+				nextActivity.setActivityOwner(activity.getString("activity_owner"));
+				
+//				activities.add(nextActivity);
+			});
+			
+			
+			txn.commit();
+//			return Response.ok(" {} ").build();
+			return Response.status(Status.OK).entity(g.toJson(nextActivity)).build();
+//			
+//			ActivitiesData newActivity = new ActivitiesData();
+//			
+//			newActivity.setTitle(activityEntity.getString("activity_title"));
+//			newActivity.setDescription(activityEntity.getString("activity_description"));
+//			newActivity.setDate(activityEntity.getString("activity_date"));
+//			newActivity.setLocation(activityEntity.getString("activity_location"));
+//			newActivity.setTotalParticipants(activityEntity.getLong("activity_total_participants"));
+//			newActivity.setActivityOwner(activityEntity.getString("activity_owner"));
+//			newActivity.setCategory(activityEntity.getString("activity_category"));
+//				
+//			txn.commit();
+////			return Response.ok(" {} ").build();
+//			return Response.status(Status.OK).entity(g.toJson(newActivity)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
 		
 	}
 	
