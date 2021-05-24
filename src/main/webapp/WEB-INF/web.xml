@@ -58,4 +58,14 @@
 		<servlet-name>jerseyServlet</servlet-name>
 		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping>
+	
+	 <servlet>
+        <servlet-name>webServlet</servlet-name>
+        <servlet-class>pt.unl.fct.di.apdc.helpinhand.resources.MediaResourceServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>webServlet</servlet-name>
+        <url-pattern>/gcs/*</url-pattern>
+    </servlet-mapping>
+	
 </web-app>

@@ -1,6 +1,7 @@
 package pt.unl.fct.di.apdc.helpinhand.resources;
 
 
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,6 +12,7 @@ import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
@@ -28,10 +30,12 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 
+
+
 public class MediaResourceServlet extends HttpServlet {
 	
 	
-	
+	 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		
@@ -45,11 +49,16 @@ public class MediaResourceServlet extends HttpServlet {
 		String bucketName = objectPath.getName(0).toString();
 		String srcFileName = objectPath.getName(1).toString();
 		
+		//String filePath = "\\"+"gcs"+"\\"+bucketName+"\\"+srcFileName;
+		
 	    Storage storage = StorageOptions.getDefaultInstance().getService();
 	    BlobId blobId = BlobId.of(bucketName, srcFileName);
-	    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-	    storage.create(blobInfo, Files.readAllBytes(Paths.get(objectPath.toString())));
-		
+	    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(req.getContentType()).build();
+//	    storage.create(blobInfo, Files.readAllBytes(Paths.get(objectPath.toString())));
+		Blob blob = storage.create(blobInfo, req.getInputStream());
+
+
+	    
 		
 	}
 

@@ -17,7 +17,7 @@ import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
 
-@Path("/upload")
+
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
 public class UploadResource {
 

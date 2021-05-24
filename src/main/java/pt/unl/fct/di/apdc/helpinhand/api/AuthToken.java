@@ -10,7 +10,7 @@ public class AuthToken {
 	
 	//new comment
 	
-public static final long EXPIRATION_TIME = 1000*60*20; //2h 1000*60*60*2  //// 1000*60*20
+public static final long EXPIRATION_TIME = 1000*60*60; //2h 1000*60*60*2  //// 1000*60*20
 	
 	public String username;
 	

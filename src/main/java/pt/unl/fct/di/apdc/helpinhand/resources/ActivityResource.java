@@ -91,7 +91,7 @@ public class ActivityResource {
 					request.getActivityData().getActivityOwner(),
 					request.getActivityData().getCategory());
 			Key activityKey = factory
-					.addAncestor(PathElement.of("User", request.getActivityData().getActivityOwner()))
+					.addAncestor(PathElement.of("User", act.getActivityOwner()))
 					.setKind("Activity")
 					.newKey(act.getTitle());
 			
@@ -137,7 +137,7 @@ public class ActivityResource {
 	}
 	
 	
-	
+	//LISTA TODAS - ADICIONAR O FILTRO PARA LISTAR SO AS DO USER
 	@POST
 	@Path("/list")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -177,10 +177,10 @@ public class ActivityResource {
 			
 			Query<Entity> query = Query.newEntityQueryBuilder()
 					.setKind("Activity")
-					.setFilter(
-									PropertyFilter.hasAncestor(
-											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
-							)
+//					.setFilter(
+//									PropertyFilter.hasAncestor(
+//											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
+//							)
 					.setOrderBy(OrderBy.desc("activity_title"))
 					.setLimit(10)
 					.build();
