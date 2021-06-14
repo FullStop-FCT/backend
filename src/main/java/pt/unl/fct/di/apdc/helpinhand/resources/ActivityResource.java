@@ -77,11 +77,17 @@ public class ActivityResource {
 //			Entity orgEntity=txn.get(orgKey);
 			Entity tokenEntity=txn.get(tokenKey);
 			
-			if(tokenEntity == null || System.currentTimeMillis() > request.getToken().getExpirationData()) {
+//			if(tokenEntity == null || System.currentTimeMillis() > request.getToken().getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			} 
+			
+			if(tokenEntity == null) {
 				txn.rollback();
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
-			} 
+			}
 //			Key activityKey = database.getActivityKey(request.getActivityData());
 			ActivitiesData act = new ActivitiesData(request.getActivityData().getTitle(), 
 					request.getActivityData().getDescription(),
@@ -89,7 +95,9 @@ public class ActivityResource {
 					request.getActivityData().getLocation(),
 					request.getActivityData().getTotalParticipants(),
 					request.getActivityData().getActivityOwner(),
-					request.getActivityData().getCategory());
+					request.getActivityData().getCategory(),
+					request.getActivityData().getLat(),
+					request.getActivityData().getLon());
 			Key activityKey = factory
 					.addAncestor(PathElement.of("User", act.getActivityOwner()))
 					.setKind("Activity")
@@ -111,6 +119,8 @@ public class ActivityResource {
 //						.set("activity_participants", request.getActivityData().getList());
 						.set("activity_category", request.getActivityData().getCategory())
 						.set("activity_owner", request.getToken().getUsername())
+						.set("activity_lat", request.getActivityData().getLat())
+						.set("activity_lon", request.getActivityData().getLon())
 						.build();
 				
 				txn.add(activityEntity);
@@ -152,7 +162,13 @@ public class ActivityResource {
 		
 		
 		try {
-			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(tokenEntity == null) {
 				txn.rollback();
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();

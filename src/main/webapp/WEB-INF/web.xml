@@ -10,15 +10,15 @@
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
 
-	<error-page>
+	<!-- <error-page>
 		<error-code>404</error-code>
-		<location>/error/404.html</location>
+		<location>/404.html</location>
 	</error-page>
 
 	<error-page>
 		<error-code>500</error-code>
-		<location>/error/500.html</location>
-	</error-page>
+		<location>/500.html</location>
+	</error-page> -->
 
 	<!-- added servlet -->
 
@@ -46,6 +46,7 @@
 			<param-value>/rest/*</param-value>
 		</init-param>
 
+
 		<init-param>
 			<param-name>jersey.config.server.tracing.type</param-name>
 			<param-value>ALL</param-value> <!-- This is a debug utility that should be disabled when code goes to production -->
@@ -65,7 +66,9 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>webServlet</servlet-name>
-        <url-pattern>/gcs/*</url-pattern>
+        <url-pattern>/rest/gcs/*</url-pattern>
     </servlet-mapping>
+	
+	
 	
 </web-app>

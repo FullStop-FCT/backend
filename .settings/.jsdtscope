@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/main/webapp"/>
+	<classpathentry excluding="_app.js|_document.js|_error.js|home.js|server/chunks/569.js|server/chunks/664.js|server/chunks/859.js|server/pages/_app.js|server/pages/_document.js|server/pages/_error.js|server/pages/home.js|server/pages/users/[user].js|users/|users/[user].js" kind="src" path="src/main/webapp"/>
 	<classpathentry excluding="**/bower_components/*|**/node_modules/*|**/*.min.js" kind="src" path="target/m2e-wtp/web-resources"/>
 	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.WebProject">

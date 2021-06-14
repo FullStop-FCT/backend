@@ -226,12 +226,16 @@ public class UserResource{
 			Entity userEntity = txn.get(userKey);
 			Entity tokenEntity = txn.get(tokenKey);
 			
-			if(tokenEntity == null || System.currentTimeMillis() > request.getToken().getExpirationData()) {
+//			if(tokenEntity == null || System.currentTimeMillis() > request.getToken().getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			if(tokenEntity == null) {
 				txn.rollback();
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
 			}
-			
 			
 			if(userEntity.getString("user_role").equals(Roles.USER.toString()) && (!userEntity.getString("user_state").equals(State.DELETED.toString()) 
 					|| !userEntity.getString("user_state").equals(State.DISABLED.toString())) ) {
@@ -339,12 +343,16 @@ public class UserResource{
 		try {
 			Entity userEntity = txn.get(userKey);
 			
-			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			if(tokenEntity == null) {
 				txn.rollback();
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
 			}
-			
 			
 			if(userEntity == null) {
 				txn.rollback();

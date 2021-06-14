@@ -11,6 +11,8 @@ public class ActivitiesData {
 	private String description;
 	private String date;
 	private String location;
+	private String lat;
+	private String lon;
 	private long totalParticipants;
 	private String activityOwner;
 	private String category;
@@ -22,7 +24,8 @@ public class ActivitiesData {
 		
 	}
 	
-	public ActivitiesData(String title, String description, String date, String location, long totalParticipants, String activityOwner, String category) {
+	public ActivitiesData(String title, String description, String date, String location, 
+			long totalParticipants, String activityOwner, String category, String lat, String lon ) {
 //		this.ID = UUID.randomUUID().fromString(title).toString();
 		this.ID = UUID.randomUUID().randomUUID().toString();
 		this.title=title;
@@ -33,6 +36,8 @@ public class ActivitiesData {
 		this.category = category;
 //		this.participants = new ArrayList<>(totalParticipants);
 		this.activityOwner=activityOwner;
+		this.setLat(lat);
+		this.setLon(lon);
 		
 	}
 
@@ -130,6 +135,22 @@ public class ActivitiesData {
 
 	public void setID(String iD) {
 		ID = iD;
+	}
+
+	public String getLat() {
+		return lat;
+	}
+
+	public void setLat(String lat) {
+		this.lat = lat;
+	}
+
+	public String getLon() {
+		return lon;
+	}
+
+	public void setLon(String lon) {
+		this.lon = lon;
 	}
 
 }

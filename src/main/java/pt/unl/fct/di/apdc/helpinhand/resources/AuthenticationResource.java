@@ -175,7 +175,13 @@ public class AuthenticationResource {
 		
 		try {
 			
-			if(tokenEntity == null || System.currentTimeMillis() > token.getExpirationData()) {
+//			if(tokenEntity == null || System.currentTimeMillis() > token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+			if(tokenEntity == null) {
 				txn.rollback();
 				LOG.warning("Token Authentication Failed");
 				return Response.status(Status.FORBIDDEN).build();
