@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "helpin-hand",
+  "private_key_id": "bcba981f0c85bcdb7506f7952da63234d24d5544",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCbxB4qRyTVvhHX\n0F+Ipukkc8gtMzqGs0zNaucxMAopuBjqW7y8YSp99Ty/B4ZYZfFCY4fK0miurnxc\ni89uPHOciPE5glYAZwJGXisJ125azqyCZSQHfUhiuZ1oZjbT0okl0WNkxlIJfNjF\nlXi84dx/DQXm7kr5NhZppCPfGjZMzkUQExGSAG+42BSMhs+O2dtjmtN+nkCMt6UP\nNr+kPcWE0S7E2oXQTfQ/Jx9237JqljsTSRTnTsgky0haBtHWnETkZFRxNqZMwfDm\nwWGaGt310MXbxrudTUDmYRezmeNJ2xxSPGTXJ0UVCTfUMD/lh2wZuAkxjYqJ0V2T\nWry6uDihAgMBAAECggEAK1cfOY5ADoTrPAxLeJ9QgYcBrKnzX+VlukZDe6ktOrxx\nmkvaMOQsSY3B0DlMxS3gOiOtdd6jp+7+xVVVawvA804bKHA+c7A1rtSmzv81Qmj9\nEO8JXlgamvWgeZrvKHMNHAutxy1zSBaHzjovtQZ3Lpa2DLJDBCJrjAtSu9H0R9wx\nnyYxw76s5FYHkNyl2HUhdENOTCSZHaKYyjrvL38I8yWf5CCV7X2JVtDdqvPjXefL\nI5w5bN7dIOObPEdjIOxk2ypW85vHlK5YMBqEK4v2yxcmUQRnsVwdiqbes0sTWtHZ\nrDbZp5IgJuDtCn+JP3Dgbeei74LZtlsiRh2Mn44UbQKBgQDPswWTzQZyHwblhvEV\nCus2OIpFp2z0luxIcgMldtkOJADCOvBtIHJZfgPevemfquYyHRQMdQHDCgHuOQBv\nc1ty30EsJBLHv8ftYrA+wUBaXIpYKsHPOPi8pfB2V4JCdEEIVFmnmkxG6ZbSYkMB\nR44xwI0g1F9YnhoFS5ol/DYstwKBgQC//VoTLDLaeatHqWNgAT58YSyRYtp2VyT3\nYbjzyCQ6rooomAC59xW6ZKylJUOJHSuwd/pdIMXPmxBjKFvKn1i3vtBFGI3VI1zd\nHPSBw3E7NpUKcqmFHFrvDJag9t/tPFmXIOfPIaascvIxnxFezwYae6V0rltI8RTL\nDyLAtICdZwKBgAl3ZFqvLosHBP5zHwvRepT3EL5J+jpPoqdOovwTJaNyWqJ/ozOm\nFfAkQTLmvv4rAODp2F8U+iaUjy/3YyCxRkq/CC5l2oFGKWuVYukJT9COhTOthzXV\np+iZO5N5O5OhztD9XzS3YKCexuQB3IHza/SyjPwhEdNtKUxyfK0ciK+TAoGAHBIA\nz3jQ3pyXbFzZyLml1y2mBIO9iTvojbrd/davZV0Lmi/PO2Fi7eO2UlcGbs+zCZQh\nKOiXw2jaloTaFuABaqwda1zRr+4Br9qB7U8UCSJL3EEzg+DHctgWVeaCiv8d4jjP\na7tx0RjlTFgDhCckr06QvGSZuCp3bdECtcYuX9UCgYAwSilWEKskhbnLaKfTPTVY\n9R3pgg2Ekk+8+Di4C5L9pecLr+n3f18fqDDZRW1Usrhw4qjSomQkRpy2ZTpia5zx\n/hQW8j5SNFCFrtCowXe80zAe7sGLRJx72rCOwt8/a5J45CrIMcR2PCePbms2sMmj\nXW9Lmz7biyrnGAdsf5CQTw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "fullstop-helpinhand@helpin-hand.iam.gserviceaccount.com",
+  "client_id": "103845184776406100013",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fullstop-helpinhand%40helpin-hand.iam.gserviceaccount.com"
+}

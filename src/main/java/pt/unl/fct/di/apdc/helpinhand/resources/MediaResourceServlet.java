@@ -1,6 +1,7 @@
 package pt.unl.fct.di.apdc.helpinhand.resources;
 
 
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
@@ -9,11 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
-import com.google.appengine.api.urlfetch.HTTPHeader;
-import com.google.appengine.api.urlfetch.HTTPMethod;
-import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.URLFetchService;
-import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.Blob;
@@ -40,13 +37,15 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+
+@SuppressWarnings("serial")
 @MultipartConfig
 @WebServlet(
-	    name = "Servlet",
-	    urlPatterns = { "/url"},
+	    name = "webServlet",
+	    urlPatterns = { "/upload"},
 	    loadOnStartup = 1)
 public class MediaResourceServlet extends HttpServlet {
-
+//	private static final MultipartConfigElement MULTI_PART_CONFIG = new MultipartConfigElement("c:/temp");
 	
 //	 
 //	@Override
@@ -86,24 +85,38 @@ public class MediaResourceServlet extends HttpServlet {
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 		
-		Path objectPath = Paths.get(req.getPathInfo());
+		Path objectPath = Paths.get(req.getPathInfo());   
 		
 		if(objectPath.getNameCount()!=2) {
 			throw new IllegalArgumentException("The URL is not formed as expected. " +
 					"Excpectin /gcs/<bucket>/<objet>");
 		}
+		String kfPath = "helpin-hand-bcba981f0c85.json";
+		
+		ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(new FileInputStream(kfPath));
+		
+		
+//		SignUrlOption.signWith(ServiceAccountCredentials.fromStream(new FileInputStream(kfPath)
 		
 		String bucketName = objectPath.getName(0).toString();
 		String srcFileName = objectPath.getName(1).toString();
-		Storage storage = StorageOptions.getDefaultInstance().getService();
-	    BlobId blobId = BlobId.of(bucketName, srcFileName);
+//		Storage.SignUrlOption.signWith(ServiceAccountSigner);
+//		Storage storage = StorageOptions.getDefaultInstance().getService();
+		
+		
+		
+		
+		Storage storage = StorageOptions.newBuilder().setCredentials(credentials).setProjectId("helpin-hand").build().getService();
+	    
+		BlobId blobId = BlobId.of(bucketName, srcFileName);
 		BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(req.getContentType()).build();
 //		URL signedUrl = storage.signUrl(BlobInfo.newBuilder(bucketName,srcFileName).build(), 7, TimeUnit.DAYS);
-		URL signedUrl = storage.signUrl(blobInfo, 7, TimeUnit.DAYS, Storage.SignUrlOption.httpMethod(HttpMethod.POST));
 		
+//		URL signedUrl = storage.signUrl(blobInfo, 7, TimeUnit.DAYS, Storage.SignUrlOption.httpMethod(HttpMethod.POST));
+		URL signedUrl = storage.signUrl(blobInfo, 7, TimeUnit.DAYS, Storage.SignUrlOption.signWith(ServiceAccountCredentials.fromStream(new FileInputStream(kfPath))));
 		
-		javax.servlet.http.Part filePart = req.getPart("image");
-		java.io.InputStream is = filePart.getInputStream();
+		Part filePart = req.getPart("image");
+		InputStream is = filePart.getInputStream();
 		
 //		System.out.println(req.getInputStream());
 		//
@@ -118,28 +131,11 @@ public class MediaResourceServlet extends HttpServlet {
 		}
 		byte[] finalOutput = output.toByteArray();
 		
-		//
-//		System.out.println("esta aqui");
-		
 
-		
 		try(WriteChannel writer = storage.writer(signedUrl)){
 //			writer.write(ByteBuffer.wrap(req.ge, 0, 0));
 			writer.write(ByteBuffer.wrap(finalOutput,0, finalOutput.length));
-//			writer.w
 		}
-		
-		//String filePath = "\\"+"gcs"+"\\"+bucketName+"\\"+srcFileName;
-		
-		
-	    
-//	    System.out.println(" content" + req.getContentType());
-//	    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(req.getContentType()).build();
-//	    storage.create(blobInfo, Files.readAllBytes(Paths.get(objectPath.toString())));
-//	    storage.create(blobInfo, req.getInputStream());
-//	    Blob blob = storage.create(blobInfo, req.getInputStream());
-
-	    
 		
 	}
 	
