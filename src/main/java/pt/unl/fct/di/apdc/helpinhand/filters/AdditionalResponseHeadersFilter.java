@@ -2,6 +2,7 @@ package pt.unl.fct.di.apdc.helpinhand.filters;
 
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
@@ -20,6 +21,7 @@ public class AdditionalResponseHeadersFilter implements ContainerResponseFilter 
 				responseContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With");
 				requestContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With");
 				requestContext.getHeaders().add("Access-Control-Allow-Origin", "*");
+
 	}
 	
 }
