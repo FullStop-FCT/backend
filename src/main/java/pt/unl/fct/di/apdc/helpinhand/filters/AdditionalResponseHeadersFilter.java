@@ -17,7 +17,8 @@ public class AdditionalResponseHeadersFilter implements ContainerResponseFilter 
 			throws IOException {
 				responseContext.getHeaders().add("Access-Control-Allow-Methods", "HEAD,GET,PUT,POST,DELETE,OPTIONS,PATCH");
 				responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
-				responseContext.getHeaders().add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With");
+				responseContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With");
+				requestContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With");
 				requestContext.getHeaders().add("Access-Control-Allow-Origin", "*");
 	}
 	
