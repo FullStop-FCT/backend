@@ -15,12 +15,6 @@
 	</automatic-scaling>
 
 	<static-files>
-		<include path="/registeroption" expiration="1m" />
-		<include path="/404" expiration="1m" />
-		<include path="/500" expiration="1m" />
-		<include path="/register" expiration="1m" />
-		<include path="/login" expiration="1m" />
-		<include path="/path-to-fontawesome/font-awesome.css" expiration="1m" />
 		<include path="/*.png" expiration="1m" />
 		<include path="/**.html" expiration="1m" /> <!-- 1 minute, normal is 12h or more -->
 		<include path="/**.css" expiration="1m" /> <!-- 1 minute, normal is 12h or more -->

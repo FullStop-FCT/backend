@@ -5,6 +5,11 @@ import java.util.regex.Pattern;
 
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.Query;
+import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.StructuredQuery;
+import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
@@ -48,6 +53,21 @@ public class Verification {
 				&& user.getPassword().equals(user.getConfirmation())
 				&& this.validateEmail(user.getEmail());
 
+	}
+	
+	public boolean existingEmail(String email) {
+		Query<Entity> query = Query.newEntityQueryBuilder()
+				.setKind("User")
+				.setFilter(
+						StructuredQuery.PropertyFilter.eq("user_email", email))
+				.build();
+		
+		QueryResults<Entity> emailQuery = datastore.run(query);
+	
+		if(emailQuery.hasNext())
+			return true;
+
+		return false;
 	}
 	
 }

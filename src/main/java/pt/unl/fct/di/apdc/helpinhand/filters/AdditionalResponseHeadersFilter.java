@@ -21,6 +21,7 @@ public class AdditionalResponseHeadersFilter implements ContainerResponseFilter 
 				responseContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With");
 				requestContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With");
 				requestContext.getHeaders().add("Access-Control-Allow-Origin", "*");
+				requestContext.getHeaders().add("Access-Control-Allow-Methods", "PATCH");
 
 	}
 	

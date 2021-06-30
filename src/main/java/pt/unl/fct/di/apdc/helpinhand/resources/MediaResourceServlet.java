@@ -91,7 +91,9 @@ public class MediaResourceServlet extends HttpServlet {
 			throw new IllegalArgumentException("The URL is not formed as expected. " +
 					"Excpectin /gcs/<bucket>/<objet>");
 		}
-		String kfPath = "helpin-hand-bcba981f0c85.json";
+//		String kfPath = "helpin-hand-bcba981f0c85.json";
+		
+		String kfPath = "helpinhand-318217-9163cf9cdb72.json";
 		
 		ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(new FileInputStream(kfPath));
 		

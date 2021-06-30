@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import com.google.cloud.datastore.Value;
+
 public class ActivitiesData {
 
 	private String title;
@@ -18,6 +20,10 @@ public class ActivitiesData {
 	private String category;
 	private List<String> participants;
 	private String ID;
+	private long points;
+	private String startHour;
+	private String endHour;
+	private List<String> keywords;
 	
 	
 	public ActivitiesData() {
@@ -25,7 +31,8 @@ public class ActivitiesData {
 	}
 	
 	public ActivitiesData(String title, String description, String date, String location, 
-			long totalParticipants, String activityOwner, String category, String lat, String lon ) {
+			long totalParticipants, String activityOwner, String category, String lat, String lon, 
+			String startHour, String endHour, List<String> list) {
 //		this.ID = UUID.randomUUID().fromString(title).toString();
 		this.ID = UUID.randomUUID().randomUUID().toString();
 		this.title=title;
@@ -38,6 +45,11 @@ public class ActivitiesData {
 		this.activityOwner=activityOwner;
 		this.setLat(lat);
 		this.setLon(lon);
+		this.setStartHour(startHour);
+		this.setEndHour(endHour);
+		this.setPoints(100);
+		this.keywords = keywords;
+		this.participants =null;
 		
 	}
 
@@ -151,6 +163,38 @@ public class ActivitiesData {
 
 	public void setLon(String lon) {
 		this.lon = lon;
+	}
+
+	public String getStartHour() {
+		return startHour;
+	}
+
+	public void setStartHour(String startHour) {
+		this.startHour = startHour;
+	}
+
+	public String getEndHour() {
+		return endHour;
+	}
+
+	public void setEndHour(String endHour) {
+		this.endHour = endHour;
+	}
+
+	public long getPoints() {
+		return points;
+	}
+
+	public void setPoints(long points) {
+		this.points = points;
+	}
+
+	public List<String> getKeywords() {
+		return keywords;
+	}
+
+	public void setKeywords(List<String> keywords) {
+		this.keywords = keywords;
 	}
 
 }
