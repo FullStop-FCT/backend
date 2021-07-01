@@ -180,87 +180,135 @@ public class ActivityResource {
 		return result;
 	}
 	
-//	private List<String> convertToList(List<Value<String>> listValue){
-//		
-//		List<String> result = new ArrayList<String>();
-//		
-//		for (Value<String> v : listValue) {
-//			result.add(Value.of(v));
-//			
-//		}
-//		
-//	}
+	private List<String> convertToList(List<Value<String>> listValue){
+		
+		List<String> result = new ArrayList<String>();
+		
+		for (Value<String> v : listValue) {
+			result.add(v.get());
+			
+		}
+		return result;
+		
+	}
 //	
 //	
 	
 //	
-//	@GET
-//	@Path("/search")
-//	@Consumes(MediaType.APPLICATION_JSON)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public Response doSearch(AuthToken token, @QueryParam("keyword") String keyword) {
-//		
-//		Transaction txn = datastore.newTransaction();
-//		
-//		Key tokenKey = database.getTokenKey(token);
-//		
-//		Entity tokenEntity = txn.get(tokenKey);
-//		
-//		try {
-////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
-////			txn.rollback();
-////			LOG.warning("Token Authentication Failed");
-////			return Response.status(Status.FORBIDDEN).build();
-////		}
-//		
-//		if(tokenEntity == null) {
+	@GET
+	@Path("/search")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doSearch(AuthToken token, @QueryParam("keyword") String keyword) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
 //			txn.rollback();
 //			LOG.warning("Token Authentication Failed");
 //			return Response.status(Status.FORBIDDEN).build();
 //		}
-//		if(!keyword.isEmpty()) {
-//			Query<Entity> query = Query.newEntityQueryBuilder()
-//					.setKind("Activity")
-//					.setFilter(
-//							StructuredQuery.PropertyFilter.eq("activity_keyword", keyword))
-//					.setLimit(25)
-//					.build();
-//			
-//			QueryResults<Entity> search = datastore.run(query);
-//			
-//			List<ActivitiesData> activities = new ArrayList<>();
-//			
-//			search.forEachRemaining(activity ->{
-//				ActivitiesData newAct = new ActivitiesData();
-//				newAct.setCategory(activity.getString("activity_category"));
-//				newAct.setDate(activity.getString("activity_date"));
-//				newAct.setDescription(activity.getString("activity_description"));
-//				newAct.setStartHour(activity.getString("activity_startHour"));
-//				newAct.setEndHour(activity.getString("activity_endHour"));
-//				newAct.setKeywords(activity.getList("activity_keywords"));
-//				
-//				
-//			});
-//			
-//		}
-//	
-//		
-//		txn.commit();
-//		return Response.status(Status.OK).entity(g.toJson()).build();
-//		
-//		}catch(Exception e) {
-//			txn.rollback();
-//			LOG.warning("exception "+ e.toString());
-//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-//		}finally {
-//			if(txn.isActive()) {
-//				txn.rollback();
-//				LOG.warning("entered finally");
-//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-//			}
-//		}
-//		
-//	}
+		
+		if(tokenEntity == null) {
+			txn.rollback();
+			LOG.warning("Token Authentication Failed");
+			return Response.status(Status.FORBIDDEN).build();
+		}
+		
+		LOG.warning("keyword: " + keyword);
+		if(!keyword.isEmpty()) {
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+					.setFilter(
+							StructuredQuery.PropertyFilter.eq("activity_keywords", keyword))
+
+					.setLimit(25)
+					.build();
+			
+			QueryResults<Entity> search = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			search.forEachRemaining(activity ->{
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setCategory(activity.getString("activity_category"));
+				newAct.setDate(activity.getString("activity_date"));
+				newAct.setDescription(activity.getString("activity_description"));
+				newAct.setStartHour(activity.getString("activity_startHour"));
+				newAct.setEndHour(activity.getString("activity_endHour"));
+				newAct.setKeywords(convertToList(activity.getList("activity_keywords")));
+				newAct.setLat(activity.getString("activity_lat"));
+				newAct.setLon(activity.getString("activity_lon"));
+				newAct.setLocation(activity.getString("activity_location"));
+				newAct.setActivityOwner(activity.getString("activity_owner"));
+				newAct.setTotalParticipants(activity.getString("activity_total_participants"));
+				newAct.setTitle(activity.getString("activity_title"));
+				//newAct.setParticipants(convertToList(activity.getList("activity_participants")));
+				
+				activities.add(newAct);
+				
+				
+			});
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}else {
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+					.setLimit(25)
+					.build();
+			
+			QueryResults<Entity> search = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			search.forEachRemaining(activity ->{
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setCategory(activity.getString("activity_category"));
+				newAct.setDate(activity.getString("activity_date"));
+				newAct.setDescription(activity.getString("activity_description"));
+				newAct.setStartHour(activity.getString("activity_startHour"));
+				newAct.setEndHour(activity.getString("activity_endHour"));
+				newAct.setKeywords(convertToList(activity.getList("activity_keywords")));
+				newAct.setLat(activity.getString("activity_lat"));
+				newAct.setLon(activity.getString("activity_lon"));
+				newAct.setLocation(activity.getString("activity_location"));
+				newAct.setActivityOwner(activity.getString("activity_owner"));
+				newAct.setTotalParticipants(activity.getString("activity_total_participants"));
+				newAct.setTitle(activity.getString("activity_title"));
+				//newAct.setParticipants(convertToList(activity.getList("activity_participants")));
+				
+				activities.add(newAct);
+				
+				
+			});
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+		}
+	
+		
+		
+		
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
 //	
 
 	//LISTA TODAS - ADICIONAR O FILTRO PARA LISTAR SO AS DO USER
@@ -330,7 +378,7 @@ public class ActivityResource {
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
 				nextActivity.setLocation(activity.getString("activity_location"));
-				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
+				nextActivity.setTotalParticipants(activity.getString("activity_total_participants"));
 				nextActivity.setDate(activity.getString("activity_date"));
 				nextActivity.setActivityOwner(activity.getString("activity_owner"));
 				
@@ -398,7 +446,7 @@ public class ActivityResource {
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
 				nextActivity.setLocation(activity.getString("activity_location"));
-				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
+				nextActivity.setTotalParticipants(activity.getString("activity_total_participants"));
 				nextActivity.setDate(activity.getString("activity_date"));
 				nextActivity.setActivityOwner(activity.getString("activity_owner"));
 				
@@ -476,7 +524,7 @@ public class ActivityResource {
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
 				nextActivity.setLocation(activity.getString("activity_location"));
-				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
+				nextActivity.setTotalParticipants(activity.getString("activity_total_participants"));
 				nextActivity.setDate(activity.getString("activity_date"));
 				nextActivity.setActivityOwner(activity.getString("activity_owner"));
 				

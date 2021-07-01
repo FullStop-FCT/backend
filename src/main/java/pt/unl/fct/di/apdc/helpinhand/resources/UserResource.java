@@ -102,7 +102,7 @@ public class UserResource{
 				return Response.status(Status.BAD_REQUEST).entity("User already exists.").build();	
 			}else {
 			
-
+				
 				userEntity = Entity.newBuilder(userKey)
 						.set("user_name", userData.getName())
 						.set("user_email", userData.getEmail())
@@ -395,6 +395,16 @@ public class UserResource{
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
+			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+				UsersData newUser = new UsersData();
+				
+				newUser.setUsername(userEntity.getKey().getName());
+				newUser.setName(userEntity.getString("user_name"));
+				newUser.setImage(userEntity.getString("user_image"));
+				
+				txn.commit();
+				return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+			}
 
 				UsersData newUser = new UsersData();
 			
@@ -430,6 +440,178 @@ public class UserResource{
 		}
 		
 	}
+	
+	
+	@GET
+	@Path("/user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUserNoLogin(AuthToken token) {
+		
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		Key userKey = database.getUserKey(token.getUsername());	
+		
+		
+		try {
+				
+			Entity userEntity = txn.get(userKey);
+			
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			UsersData newUser = new UsersData();
+			
+			newUser.setUsername(userEntity.getKey().getName());
+			newUser.setName(userEntity.getString("user_name"));
+			newUser.setEmail(userEntity.getString("user_email"));
+			newUser.setProfile(userEntity.getString("user_profile"));
+			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+			newUser.setLocation(userEntity.getString("user_location"));
+			newUser.setBirthday(userEntity.getString("user_birthday"));
+			newUser.setGender(userEntity.getString("user_gender"));
+			newUser.setImage(userEntity.getString("user_image"));
+			newUser.setImage(userEntity.getString("user_hours"));
+			newUser.setActivities(userEntity.getList("user_activities"));
+			newUser.setCreatedActivities(userEntity.getList("created_activities"));
+			newUser.setFollowings(userEntity.getList("user_following"));
+			
+
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
+	
+	
+//	@GET
+//	@Path("/user/{username}")
+////	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetUserNoLogin(@PathParam("username") String username) {
+//		
+//		
+//		Transaction txn = datastore.newTransaction();
+//		Key userKey = database.getUserKey(username);
+////		Key tokenKey = database.getTokenKey(token);
+//		
+////		Entity tokenEntity = txn.get(tokenKey);
+//		
+//		try {
+//				
+//			Entity userEntity = txn.get(userKey);
+//			
+//			if(userEntity == null) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			UsersData newUser = new UsersData();
+//			
+//			newUser.setUsername(userEntity.getKey().getName());
+//			newUser.setName(userEntity.getString("user_name"));
+//			newUser.setEmail(userEntity.getString("user_email"));
+//			newUser.setProfile(userEntity.getString("user_profile"));
+//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//			newUser.setLocation(userEntity.getString("user_location"));
+//			newUser.setBirthday(userEntity.getString("user_birthday"));
+//			newUser.setGender(userEntity.getString("user_gender"));
+//			newUser.setImage(userEntity.getString("user_image"));
+//			newUser.setActivities(userEntity.getList("user_activities"));
+//			newUser.setCreatedActivities(userEntity.getList("created_activities"));
+//			newUser.setFollowings(userEntity.getList("user_following"));
+//			
+////			if(userEntity.getString("user_kind").equals(Kinds.ORGANIZATION.toString())) {
+////
+////				newUser.setUsername(userEntity.getKey().getName());
+////				newUser.setName(userEntity.getString("user_name"));
+////				newUser.setEmail(userEntity.getString("user_email"));
+////				newUser.setProfile(userEntity.getString("user_profile"));
+////				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+////				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//////				newUser.setAddress(userEntity.getString("user_address"));
+////				newUser.setLocation(userEntity.getString("user_location"));
+////				newUser.setImage(userEntity.getString("user_image"));
+//////				newUser.setPostalCode(userEntity.getString("user_postal_code"));
+////				
+////			}
+////			else {
+////			
+////			
+////			newUser.setUsername(userEntity.getKey().getName());
+////			newUser.setName(userEntity.getString("user_name"));
+////			newUser.setEmail(userEntity.getString("user_email"));
+////			newUser.setProfile(userEntity.getString("user_profile"));
+////			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+////			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//////			newUser.setAddress(userEntity.getString("user_address"));
+////			newUser.setLocation(userEntity.getString("user_location"));
+//////			newUser.setPostalCode(userEntity.getString("user_postal_code"));
+////			newUser.setBirthday(userEntity.getString("user_birthday"));
+////			newUser.setGender(userEntity.getString("user_gender"));
+////			newUser.setImage(userEntity.getString("user_image"));
+////			}
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
 
 
 	 @GET
@@ -473,7 +655,7 @@ public class UserResource{
 					UsersData nextUser = new UsersData();
 					nextUser.setUsername(user.getKey().getName());
 					nextUser.setName(user.getString("user_name"));
-					nextUser.setPoints(user.getLong("user_hours"));
+					nextUser.setHoursDone(user.getLong("user_hours"));
 					
 					users.add(nextUser);
 					
@@ -499,97 +681,7 @@ public class UserResource{
 	
 	
 	
-	@GET
-	@Path("/user/{username}")
-//	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetUserNoLogin(@PathParam("username") String username) {
-		
-		
-		Transaction txn = datastore.newTransaction();
-		Key userKey = database.getUserKey(username);
-//		Key tokenKey = database.getTokenKey(token);
-		
-//		Entity tokenEntity = txn.get(tokenKey);
-		
-		try {
-				
-			Entity userEntity = txn.get(userKey);
-			
-			if(userEntity == null) {
-				txn.rollback();
-				LOG.warning("No such user");
-				return Response.status(Status.FORBIDDEN).build();
-			}
-			
-			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
-				txn.rollback();
-				LOG.warning("No such user");
-				return Response.status(Status.FORBIDDEN).build();
-			}
-			
-			UsersData newUser = new UsersData();
-			
-			newUser.setUsername(userEntity.getKey().getName());
-			newUser.setName(userEntity.getString("user_name"));
-			newUser.setEmail(userEntity.getString("user_email"));
-			newUser.setProfile(userEntity.getString("user_profile"));
-			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
-			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
-			newUser.setLocation(userEntity.getString("user_location"));
-			newUser.setBirthday(userEntity.getString("user_birthday"));
-			newUser.setGender(userEntity.getString("user_gender"));
-			newUser.setImage(userEntity.getString("user_image"));
-			newUser.setActivities(userEntity.getList("user_activities"));
-			newUser.setCreatedActivities(userEntity.getList("created_activities"));
-			newUser.setFollowings(userEntity.getList("user_following"));
-			
-//			if(userEntity.getString("user_kind").equals(Kinds.ORGANIZATION.toString())) {
-//
-//				newUser.setUsername(userEntity.getKey().getName());
-//				newUser.setName(userEntity.getString("user_name"));
-//				newUser.setEmail(userEntity.getString("user_email"));
-//				newUser.setProfile(userEntity.getString("user_profile"));
-//				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
-//				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
-////				newUser.setAddress(userEntity.getString("user_address"));
-//				newUser.setLocation(userEntity.getString("user_location"));
-//				newUser.setImage(userEntity.getString("user_image"));
-////				newUser.setPostalCode(userEntity.getString("user_postal_code"));
-//				
-//			}
-//			else {
-//			
-//			
-//			newUser.setUsername(userEntity.getKey().getName());
-//			newUser.setName(userEntity.getString("user_name"));
-//			newUser.setEmail(userEntity.getString("user_email"));
-//			newUser.setProfile(userEntity.getString("user_profile"));
-//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
-//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
-////			newUser.setAddress(userEntity.getString("user_address"));
-//			newUser.setLocation(userEntity.getString("user_location"));
-////			newUser.setPostalCode(userEntity.getString("user_postal_code"));
-//			newUser.setBirthday(userEntity.getString("user_birthday"));
-//			newUser.setGender(userEntity.getString("user_gender"));
-//			newUser.setImage(userEntity.getString("user_image"));
-//			}
-			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
-			
-			
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-	}
+	
 	
 	
 	
@@ -645,56 +737,56 @@ public class UserResource{
 	}
 	
 	
-	@GET
-	@Path("/ranking")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doRanking() {
-		Transaction txn = datastore.newTransaction();
-		
-		try {
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("User")
-					.setFilter(
-							StructuredQuery.PropertyFilter.ge("user_points", 0)
-							)
-					.setOrderBy(OrderBy.desc("user_points"))
-					.setLimit(5)
-					.build();
-			
-			QueryResults<Entity> rankingQuery = datastore.run(query);
-			
-			
-			
-			List<UsersData> users = new ArrayList<>();
-			
-			rankingQuery.forEachRemaining(user -> {
-				UsersData nextUser = new UsersData();
-				nextUser.setUsername(user.getKey().getName());
-//				long newPoints;
-//				newPoints = user.getLong("user_points")+0;
-//				nextUser.setPoints(newPoints);
-				nextUser.setPoints(user.getLong("user_points"));
-				
-				users.add(nextUser);
-			});
-			
-			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(users)).build();
-			
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-	}
-	
-	
+//	@GET
+//	@Path("/ranking")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doRanking() {
+//		Transaction txn = datastore.newTransaction();
+//		
+//		try {
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("User")
+//					.setFilter(
+//							StructuredQuery.PropertyFilter.ge("user_points", 0)
+//							)
+//					.setOrderBy(OrderBy.desc("user_points"))
+//					.setLimit(5)
+//					.build();
+//			
+//			QueryResults<Entity> rankingQuery = datastore.run(query);
+//			
+//			
+//			
+//			List<UsersData> users = new ArrayList<>();
+//			
+//			rankingQuery.forEachRemaining(user -> {
+//				UsersData nextUser = new UsersData();
+//				nextUser.setUsername(user.getKey().getName());
+////				long newPoints;
+////				newPoints = user.getLong("user_points")+0;
+////				nextUser.setPoints(newPoints);
+////				nextUser.setPoints(user.getLong("user_points"));
+//				
+//				users.add(nextUser);
+//			});
+//			
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(users)).build();
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
+//	
+//	
 	
 	
 	

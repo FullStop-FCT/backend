@@ -15,7 +15,7 @@ public class ActivitiesData {
 	private String location;
 	private String lat;
 	private String lon;
-	private long totalParticipants;
+	private String totalParticipants;
 	private String activityOwner;
 	private String category;
 	private List<String> participants;
@@ -31,8 +31,8 @@ public class ActivitiesData {
 	}
 	
 	public ActivitiesData(String title, String description, String date, String location, 
-			long totalParticipants, String activityOwner, String category, String lat, String lon, 
-			String startHour, String endHour, List<String> list) {
+			String totalParticipants, String activityOwner, String category, String lat, String lon, 
+			String startHour, String endHour, List<String> keywords) {
 //		this.ID = UUID.randomUUID().fromString(title).toString();
 		this.ID = UUID.randomUUID().randomUUID().toString();
 		this.title=title;
@@ -49,7 +49,7 @@ public class ActivitiesData {
 		this.setEndHour(endHour);
 		this.setPoints(100);
 		this.keywords = keywords;
-		this.participants =null;
+		this.setParticipants(null);
 		
 	}
 
@@ -94,34 +94,34 @@ public class ActivitiesData {
 	}
 
 
-	public long getTotalParticipants() {
+	public String getTotalParticipants() {
 		return totalParticipants;
 	}
 
 
-	public void setTotalParticipants(long peopleNumber) {
+	public void setTotalParticipants(String	 peopleNumber) {
 		this.totalParticipants = peopleNumber;
 	}
 
 
 	
-	public void addParticipant(String username) {
-		participants.add(username);
-	}
-	
-	public List<String> getList() {
-		return participants;
-	}
-	
-	public void removeParticipant(String username) {
-		Iterator it = participants.iterator();
-		while(it.hasNext()) {
-			int i = (int) it.next();
-			if(participants.get(i).equals(username))
-				participants.remove(i);
-		}
-		
-	}
+//	public void addParticipant(String username) {
+//		participants.add(username);
+//	}
+//	
+//	public List<String> getList() {
+//		return participants;
+//	}
+//	
+//	public void removeParticipant(String username) {
+//		Iterator it = participants.iterator();
+//		while(it.hasNext()) {
+//			int i = (int) it.next();
+//			if(participants.get(i).equals(username))
+//				participants.remove(i);
+//		}
+//		
+//	}
 
 
 	public String getActivityOwner() {
@@ -195,6 +195,14 @@ public class ActivitiesData {
 
 	public void setKeywords(List<String> keywords) {
 		this.keywords = keywords;
+	}
+
+	public List<String> getParticipants() {
+		return participants;
+	}
+
+	public void setParticipants(List<String> participants) {
+		this.participants = participants;
 	}
 
 }

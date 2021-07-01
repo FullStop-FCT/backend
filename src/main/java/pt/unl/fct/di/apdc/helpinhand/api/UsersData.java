@@ -28,7 +28,7 @@ public class UsersData {
 //	private String postalCode;
 	private String birthday;
 	private String gender;
-	private long points;
+	//private long points;
 	private String image;
 	private long hoursDone;
 	private List<Value<?>> activities;
@@ -70,14 +70,6 @@ public class UsersData {
 		this.followings = new ArrayList<>();
 		this.createdActivities = new ArrayList<>();
 		
-//		this.phoneNumber = "";
-//		this.mobileNumber = "";
-//		this.address = "";
-//		this.extraAddress = "";
-//		this.location = "";
-//		this.profile = state.toString();
-//		this.state = State.ENABLED.toString();
-//		this.kind = "";
 		
 	}
 	
@@ -241,14 +233,14 @@ public class UsersData {
 	}
 
 
-	public long getPoints() {
-		return points;
-	}
+//	public long getPoints() {
+//		return points;
+//	}
+//
 
-
-	public void setPoints(long points) {
-		this.points = points;
-	}
+//	public void setPoints(long points) {
+//		this.points = points;
+//	}
 
 
 	public String getImage() {
