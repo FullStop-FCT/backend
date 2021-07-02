@@ -24,6 +24,7 @@ import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
+import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.ListValue;
 import com.google.cloud.datastore.LongValue;
 import com.google.cloud.datastore.PathElement;
@@ -67,6 +68,7 @@ public class UserResource{
 	private final Gson g = new Gson();
 	
 	private Transaction txn = datastore.newTransaction();
+	private KeyFactory factory = datastore.newKeyFactory();
 	
 	private Verification verifier = new Verification();
 
@@ -788,6 +790,69 @@ public class UserResource{
 	}
 	
 	
+	
+	@POST
+	@Path("/follow/{username}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doFollow(AuthToken token, @PathParam("username") String username) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+		
+		if(tokenEntity == null) {
+			txn.rollback();
+			LOG.warning("Token Authentication Failed");
+			return Response.status(Status.FORBIDDEN).build();
+		}
+		
+		
+		Key followKey = datastore.allocateId(factory
+				.addAncestors(PathElement.of("User", token.getUsername()),PathElement.of("User", username))
+				.setKind("Following")
+				.newKey()
+				);
+		
+		Entity followEntity = txn.get(followKey);
+		
+		if(followEntity !=null) {
+			txn.rollback();
+			LOG.warning("This follow already exists");
+			return Response.status(Status.BAD_REQUEST).entity("Follow already exists.").build();
+		}
+		
+		followEntity = Entity.newBuilder(followKey)
+				.set("following", username)
+				.build();
+			
+			
+		txn.add(followEntity);
+		LOG.warning("follow on user " + username + " registered");
+			
+		txn.commit();
+		return Response.ok(" {} ").build();
+	//	return Response.status(Status.OK).entity(g.toJson(users)).build();
+		
+	}catch(Exception e) {
+		txn.rollback();
+		LOG.warning("exception "+ e.toString());
+		return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+	}finally {
+		if(txn.isActive()) {
+			txn.rollback();
+			LOG.warning("entered finally");
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+	}
 
 
 	 @POST
