@@ -88,8 +88,7 @@ public class UsersData {
 		this.followings = new ArrayList<>();
 		this.createdActivities = new ArrayList<>();
 		this.isOrg = isOrg;
-		
-		
+
 	}
 	
 	public UsersData(String profile, String phoneNumber, String mobileNumber, String location,

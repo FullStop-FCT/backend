@@ -571,9 +571,9 @@ public class UserResource{
 	
 	
 	
-	@GET
+	@POST
 	@Path("/get/{username}")
-	//@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doGetUser(AuthToken token, @PathParam("username") String username) {
 		
@@ -682,9 +682,9 @@ public class UserResource{
 	}
 	
 	
-	@GET
+	@POST
 	@Path("/user")
-	//@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doGetUserNoLogin(AuthToken token) {
 		
@@ -790,9 +790,9 @@ public class UserResource{
 	
 
 
-	 @GET
+	 @POST
 	 @Path("/user/hours")
-	 //@Consumes(MediaType.APPLICATION_JSON)
+	 @Consumes(MediaType.APPLICATION_JSON)
 	 @Produces(MediaType.APPLICATION_JSON)
 	 public Response doGetUserHours(AuthToken token) {
 		 

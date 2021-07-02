@@ -209,8 +209,9 @@ public class ActivityResource {
 	
 	
 	
-	@GET
+	@POST
 	@Path("/createdBy")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doCreatedBy(AuthToken token, @QueryParam("username") String username) {
 		Transaction txn = datastore.newTransaction();
@@ -275,9 +276,9 @@ public class ActivityResource {
 	
 		
 //	
-	@GET
+	@POST
 	@Path("/search")
-	//@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doSearch(AuthToken token, @QueryParam("keyword") String keyword) {
 		
