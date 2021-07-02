@@ -117,7 +117,16 @@ public class ActivityResource {
 					.setKind("Activity")
 					.newKey(act.getID());
 			
+			Key createdKey = datastore.allocateId(factory
+					.addAncestors(PathElement.of("User", act.getActivityOwner()), PathElement.of("Activity", act.getID()))
+					.setKind("CreatedActivityBy")
+					.newKey()
+					);
+			
 			Entity activityEntity=txn.get(activityKey);
+			
+			Entity createdActivityEntity = txn.get(createdKey);
+			
 			
 			if(activityEntity != null) {
 				txn.rollback();
@@ -145,7 +154,12 @@ public class ActivityResource {
 						.set("activity_keywords", convertToValueList(request.getActivityData().getKeywords()))
 						.build();
 				
-				txn.add(activityEntity);
+				createdActivityEntity = Entity.newBuilder(createdKey)
+						.set("created_by", request.getToken().getUsername())
+						.set("activity_title", request.getActivityData().getTitle())
+						.build();
+				
+				txn.add(activityEntity, createdActivityEntity);
 				LOG.warning("activity registered " + request.getActivityData().getTitle());
 				txn.commit();
 				
@@ -191,13 +205,79 @@ public class ActivityResource {
 		return result;
 		
 	}
-//	
-//	
+
 	
+	
+	
+	@GET
+	@Path("/createdBy")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doCreatedBy(AuthToken token, @QueryParam("username") String username) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		try {
+			
+			
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("CreatedActivityBy")
+					.setFilter(
+//							CompositeFilter.and(
+//									)
+//							)
+							PropertyFilter.hasAncestor(datastore.newKeyFactory().setKind("User").newKey(username))
+//							PropertyFilter.eq("created_by", username)
+							)
+					.build();
+			
+			
+			QueryResults<Entity> createdBy = datastore.run(query);
+			List<String> activities = new ArrayList<>();
+			
+			createdBy.forEachRemaining(activity ->{
+				activities.add(activity.getString("activity_title"));
+			});
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
+	
+	
+
+//join activity
+	
+
+	
+//add hours
+	
+		
 //	
 	@GET
 	@Path("/search")
-	@Consumes(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doSearch(AuthToken token, @QueryParam("keyword") String keyword) {
 		

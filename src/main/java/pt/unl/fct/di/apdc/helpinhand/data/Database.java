@@ -39,14 +39,20 @@ public class Database {
 		return userKey;
 	}
 	
-	
-	
-	public Key getOrgKey(String nif) {
+	public Key getOrgKey(String username) {
 		Key orgKey = datastore.newKeyFactory()
-				.setKind("User")
-				.newKey(nif);
+				.setKind("Organization")
+				.newKey(username);
 		return orgKey;
 	}
+	
+	
+//	public Key getOrgKey(String nif) {
+//		Key orgKey = datastore.newKeyFactory()
+//				.setKind("User")
+//				.newKey(nif);
+//		return orgKey;
+//	}
 	
 	
 	public Key getTokenKey(AuthToken token) {

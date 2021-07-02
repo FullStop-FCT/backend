@@ -34,7 +34,7 @@ import com.google.cloud.datastore.StructuredQuery;
 import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
-import com.google.datastore.v1.ArrayValue;
+
 import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
@@ -77,6 +77,82 @@ public class UserResource{
 
 	
 	//updated with nonIndexedParameters
+//	@POST
+//	@Path("/insert") //register
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response doRegister(UsersData userData) {
+//		LOG.warning("Attempt to register user " + userData.getUsername());
+//		
+//		if(! verifier.validRegistration(userData)) {
+//			LOG.warning("Failed verifier with a missing or wrong parameter.");
+//			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+//		}
+//		
+//		if(verifier.existingEmail(userData.getEmail())) {
+//			LOG.warning("Email exists");
+//			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+//		}
+//		
+//		try {
+//			Key userKey = database.getUserKey(userData.getUsername());
+//			Entity userEntity = txn.get(userKey);
+//			if(userEntity != null ) {
+//				txn.rollback();
+//				LOG.warning("The user already exists");
+//				return Response.status(Status.BAD_REQUEST).entity("User already exists.").build();	
+//			}else {
+//			
+//				
+//				userEntity = Entity.newBuilder(userKey)
+//						.set("user_name", userData.getName())
+//						.set("user_email", userData.getEmail())
+//						.set("user_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(userData.getPassword())).setExcludeFromIndexes(true).build())
+//						.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//
+//						.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//
+//						.set("user_gender", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_birthday", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//
+//						.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_hours", userData.getHoursDone())
+//						
+//						.set("user_following", ListValue.newBuilder().build()) //followed orgs
+//						.set("user_participated_activities", ListValue.newBuilder().build())
+//						.set("user_own_activities", ListValue.newBuilder().build())
+////						.set("activities_created", LongValue.newBuilder(activities).setExcludeFromIndexes(true).build() )
+//						
+//						.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
+//						.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
+//						.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
+//						.set("user_creation_time", Timestamp.now())
+//						.set("last_time_modified", Timestamp.now())
+//						.build();
+//				txn.add(userEntity);
+//				LOG.warning("User registered " + userData.getUsername());
+//				txn.commit();
+//				
+//				return Response.ok(" {} ").build();
+//			}
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("Something went wrong entered exception e: " + e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//		}finally{
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("Something went wrong entered finally.");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//			
+//		}	
+//				
+//	}
+	
+	
 	@POST
 	@Path("/insert") //register
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -95,7 +171,13 @@ public class UserResource{
 		
 		try {
 			Key userKey = database.getUserKey(userData.getUsername());
+//			Key userKey = datastore.newKeyFactory()
+//					.addAncestor(PathElement.of("Parent", userData.getUsername()))
+//					.setKind("Supporter")
+//					.newKey(userData.getUsername());
+
 			Entity userEntity = txn.get(userKey);
+			
 			if(userEntity != null ) {
 				txn.rollback();
 				LOG.warning("The user already exists");
@@ -103,32 +185,39 @@ public class UserResource{
 			}else {
 			
 				
-				userEntity = Entity.newBuilder(userKey)
-						.set("user_name", userData.getName())
-						.set("user_email", userData.getEmail())
-						.set("user_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(userData.getPassword())).setExcludeFromIndexes(true).build())
-						.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-						.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+				if(!userData.isOrg()) {
+					userEntity = createUserEntity(userData,userKey);
+				}else
+					userEntity = createOrgEntity(userData,userKey);
 
-						.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-
-						.set("user_gender", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-						.set("user_birthday", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-
-						.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-						.set("user_hours", userData.getHoursDone())
-						
-						.set("user_following", ListValue.newBuilder().build()) //followed orgs
-						.set("user_activities", ListValue.newBuilder().build())
-						.set("created_activities", ListValue.newBuilder().build())
-//						.set("activities_created", LongValue.newBuilder(activities).setExcludeFromIndexes(true).build() )
-						
-						.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
-						.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
-						.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
-						.set("user_creation_time", Timestamp.now())
-						.set("last_time_modified", Timestamp.now())
-						.build();
+//				userEntity = Entity.newBuilder(userKey)
+//						.set("user_name", userData.getName())
+//						.set("user_email", userData.getEmail())
+//						.set("user_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(userData.getPassword())).setExcludeFromIndexes(true).build())
+//						.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_following", ListValue.newBuilder().build()) //followed orgs
+//						.set("user_own_activities", ListValue.newBuilder().build())
+//						.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
+//						.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
+//						.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
+//						.set("user_creation_time", Timestamp.now())
+//						.set("last_time_modified", Timestamp.now())
+//						
+//
+//						.set("user_gender", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_birthday", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("user_hours", userData.getHoursDone())
+//						.set("user_participated_activities", ListValue.newBuilder().build())
+//
+////						.set("activities_created", LongValue.newBuilder(activities).setExcludeFromIndexes(true).build() )
+//						
+//						
+//						.build();
+				
+				
 				txn.add(userEntity);
 				LOG.warning("User registered " + userData.getUsername());
 				txn.commit();
@@ -152,6 +241,133 @@ public class UserResource{
 				
 	}
 	
+	
+	private Entity createUserEntity(UsersData userData, Key userKey) {
+		return Entity.newBuilder(userKey)
+		.set("user_name", userData.getName())
+		.set("user_email", userData.getEmail())
+		.set("user_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(userData.getPassword())).setExcludeFromIndexes(true).build())
+		.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_following", ListValue.newBuilder().build()) //followed orgs
+		.set("created_activities", ListValue.newBuilder().build())
+		.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
+		.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
+		.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
+		.set("user_creation_time", Timestamp.now())
+		.set("last_time_modified", Timestamp.now())
+		.set("is_org", false)
+
+		.set("user_gender", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_birthday", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_hours", userData.getHoursDone())
+		.set("user_joined_activities", ListValue.newBuilder().build())
+		.build();
+	}
+	
+	
+	private Entity createOrgEntity(UsersData userData, Key userKey) {
+		return Entity.newBuilder(userKey)
+		.set("user_name", userData.getName())
+		.set("user_email", userData.getEmail())
+		.set("user_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(userData.getPassword())).setExcludeFromIndexes(true).build())
+		.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_following", ListValue.newBuilder().build()) //followed orgs
+		.set("org_followers", ListValue.newBuilder().build())
+		.set("created_activities", ListValue.newBuilder().build())
+		.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
+		.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
+		.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
+		.set("user_creation_time", Timestamp.now())
+		.set("last_time_modified", Timestamp.now())
+		.set("is_org", true)
+		
+
+		//.set("org_followers", LongValue.newBuilder(0).setExcludeFromIndexes(true).build())
+		.set("org_followers", ListValue.newBuilder().build())
+		.build();
+	}
+	
+//	@POST
+//	@Path("/insertOrg") //register
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response doRegisterOrg(UsersData userData) {
+//		LOG.warning("Attempt to register user " + userData.getUsername());
+//		
+////		if(! verifier.validRegistration(userData)) {
+////			LOG.warning("Failed verifier with a missing or wrong parameter.");
+////			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+////		}
+//		
+////		if(verifier.existingEmail(userData.getEmail())) {
+////			LOG.warning("Email exists");
+////			return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+////		}
+//		
+//		try {
+//			Key orgKey = database.getOrgKey(userData.getUsername());
+//			Entity orgEntity = txn.get(orgKey);
+//			if(orgEntity != null ) {
+//				txn.rollback();
+//				LOG.warning("The Organization already exists");
+//				return Response.status(Status.BAD_REQUEST).entity("Organization already exists.").build();	
+//			}else {
+//			
+//				
+//				orgEntity = Entity.newBuilder(orgKey)
+//						.set("org_name", userData.getName())
+//						.set("org_email", userData.getEmail())
+//						.set("org_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(userData.getPassword())).setExcludeFromIndexes(true).build())
+//						.set("org_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//						.set("org_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//
+//						.set("org_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//
+////						.set("user_gender", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+////						.set("user_birthday", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//
+//						.set("org_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+////						.set("user_hours", userData.getHoursDone())
+//						
+//						.set("org_following", ListValue.newBuilder().build()) //followed orgs
+//						.set("org_followers", LongValue.newBuilder(0).setExcludeFromIndexes(true).build())
+////						.set("user_activities", ListValue.newBuilder().build())
+//						.set("org_own_activities", ListValue.newBuilder().build())
+////						.set("activities_created", LongValue.newBuilder(activities).setExcludeFromIndexes(true).build() )
+//						
+//						.set("org_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
+//						.set("org_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
+//						.set("org_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
+//						.set("org_creation_time", Timestamp.now())
+//						.set("last_time_modified", Timestamp.now())
+//						.build();
+//				txn.add(orgEntity);
+//				LOG.warning("Organization registered " + userData.getUsername());
+//				txn.commit();
+//				
+//				return Response.ok(" {} ").build();
+//			}
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("Something went wrong entered exception e: " + e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//		}finally{
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("Something went wrong entered finally.");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//			
+//		}	
+//				
+//	}
 	
 	
 //	//in here username is ONIF (O+NIF)
@@ -353,9 +569,11 @@ public class UserResource{
 	
 	
 	
+	
+	
 	@GET
 	@Path("/get/{username}")
-	@Consumes(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doGetUser(AuthToken token, @PathParam("username") String username) {
 		
@@ -367,6 +585,11 @@ public class UserResource{
 		Entity tokenEntity = txn.get(tokenKey);
 		
 		Key userKey = database.getUserKey(username);
+
+//		Key userKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("Parent", username))
+//				.setKind("Supporter")
+//				.newKey(username);
 
 		
 		try {
@@ -406,8 +629,12 @@ public class UserResource{
 				return Response.status(Status.OK).entity(g.toJson(newUser)).build();
 			}
 
-				UsersData newUser = new UsersData();
 			
+				UsersData newUser = new UsersData();
+				//List<com.google.cloud.datastore.Value<?>> list = userEntity.contains("user_activities") ? userEntity.getList("user_activities") : new List;
+				
+
+				
 				newUser.setUsername(userEntity.getKey().getName());
 				newUser.setName(userEntity.getString("user_name"));
 				newUser.setEmail(userEntity.getString("user_email"));
@@ -415,13 +642,26 @@ public class UserResource{
 				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
 				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
 				newUser.setLocation(userEntity.getString("user_location"));
-				newUser.setBirthday(userEntity.getString("user_birthday"));
-				newUser.setGender(userEntity.getString("user_gender"));
-				newUser.setImage(userEntity.getString("user_image"));
-				newUser.setActivities(userEntity.getList("user_activities"));
-				newUser.setCreatedActivities(userEntity.getList("created_activities"));
 				newUser.setFollowings(userEntity.getList("user_following"));
+				
+				newUser.setImage(userEntity.getString("user_image"));
+				newUser.setOrg(userEntity.getBoolean("is_org"));
+				newUser.setCreatedActivities(userEntity.getList("created_activities"));
+				
 
+				if(userEntity.contains("user_joined_activities") )
+					newUser.setJoinedActivities(userEntity.getList("user_joined_activities"));
+//				if(userEntity.contains("created_activities"))
+//					
+//				if(userEntity.contains("user_following"))
+//				
+				if(userEntity.contains("org_followers"))
+					newUser.setFollowers(userEntity.getList("org_followers"));
+				if(userEntity.contains("user_birthday"))
+					newUser.setBirthday(userEntity.getString("user_birthday"));
+				if(userEntity.contains("user_gender"))
+					newUser.setGender(userEntity.getString("user_gender"));
+ 
 
 			txn.commit();
 			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
@@ -444,7 +684,7 @@ public class UserResource{
 	
 	@GET
 	@Path("/user")
-	@Consumes(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doGetUserNoLogin(AuthToken token) {
 		
@@ -487,6 +727,21 @@ public class UserResource{
 			
 			UsersData newUser = new UsersData();
 			
+//			newUser.setUsername(userEntity.getKey().getName());
+//			newUser.setName(userEntity.getString("user_name"));
+//			newUser.setEmail(userEntity.getString("user_email"));
+//			newUser.setProfile(userEntity.getString("user_profile"));
+//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//			newUser.setLocation(userEntity.getString("user_location"));
+//			newUser.setBirthday(userEntity.getString("user_birthday"));
+//			newUser.setGender(userEntity.getString("user_gender"));
+//			newUser.setImage(userEntity.getString("user_image"));
+//			newUser.setImage(userEntity.getString("user_hours"));
+//			newUser.setJoinedActivities(userEntity.getList("user_activities"));
+//			newUser.setCreatedActivities(userEntity.getList("created_activities"));
+//			newUser.setFollowings(userEntity.getList("user_following"));
+
 			newUser.setUsername(userEntity.getKey().getName());
 			newUser.setName(userEntity.getString("user_name"));
 			newUser.setEmail(userEntity.getString("user_email"));
@@ -494,13 +749,25 @@ public class UserResource{
 			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
 			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
 			newUser.setLocation(userEntity.getString("user_location"));
-			newUser.setBirthday(userEntity.getString("user_birthday"));
-			newUser.setGender(userEntity.getString("user_gender"));
-			newUser.setImage(userEntity.getString("user_image"));
-			newUser.setImage(userEntity.getString("user_hours"));
-			newUser.setActivities(userEntity.getList("user_activities"));
-			newUser.setCreatedActivities(userEntity.getList("created_activities"));
 			newUser.setFollowings(userEntity.getList("user_following"));
+			
+			newUser.setImage(userEntity.getString("user_image"));
+			newUser.setOrg(userEntity.getBoolean("is_org"));
+			newUser.setCreatedActivities(userEntity.getList("created_activities"));
+			
+
+			if(userEntity.contains("user_joined_activities") )
+				newUser.setJoinedActivities(userEntity.getList("user_joined_activities"));
+//			if(userEntity.contains("created_activities"))
+//				
+//			if(userEntity.contains("user_following"))
+//			
+			if(userEntity.contains("org_followers"))
+				newUser.setFollowers(userEntity.getList("org_followers"));
+			if(userEntity.contains("user_birthday"))
+				newUser.setBirthday(userEntity.getString("user_birthday"));
+			if(userEntity.contains("user_gender"))
+				newUser.setGender(userEntity.getString("user_gender"));
 			
 
 			txn.commit();
@@ -521,102 +788,11 @@ public class UserResource{
 	}
 	
 	
-//	@GET
-//	@Path("/user/{username}")
-////	@Consumes(MediaType.APPLICATION_JSON)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public Response doGetUserNoLogin(@PathParam("username") String username) {
-//		
-//		
-//		Transaction txn = datastore.newTransaction();
-//		Key userKey = database.getUserKey(username);
-////		Key tokenKey = database.getTokenKey(token);
-//		
-////		Entity tokenEntity = txn.get(tokenKey);
-//		
-//		try {
-//				
-//			Entity userEntity = txn.get(userKey);
-//			
-//			if(userEntity == null) {
-//				txn.rollback();
-//				LOG.warning("No such user");
-//				return Response.status(Status.FORBIDDEN).build();
-//			}
-//			
-//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
-//				txn.rollback();
-//				LOG.warning("No such user");
-//				return Response.status(Status.FORBIDDEN).build();
-//			}
-//			
-//			UsersData newUser = new UsersData();
-//			
-//			newUser.setUsername(userEntity.getKey().getName());
-//			newUser.setName(userEntity.getString("user_name"));
-//			newUser.setEmail(userEntity.getString("user_email"));
-//			newUser.setProfile(userEntity.getString("user_profile"));
-//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
-//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
-//			newUser.setLocation(userEntity.getString("user_location"));
-//			newUser.setBirthday(userEntity.getString("user_birthday"));
-//			newUser.setGender(userEntity.getString("user_gender"));
-//			newUser.setImage(userEntity.getString("user_image"));
-//			newUser.setActivities(userEntity.getList("user_activities"));
-//			newUser.setCreatedActivities(userEntity.getList("created_activities"));
-//			newUser.setFollowings(userEntity.getList("user_following"));
-//			
-////			if(userEntity.getString("user_kind").equals(Kinds.ORGANIZATION.toString())) {
-////
-////				newUser.setUsername(userEntity.getKey().getName());
-////				newUser.setName(userEntity.getString("user_name"));
-////				newUser.setEmail(userEntity.getString("user_email"));
-////				newUser.setProfile(userEntity.getString("user_profile"));
-////				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
-////				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
-//////				newUser.setAddress(userEntity.getString("user_address"));
-////				newUser.setLocation(userEntity.getString("user_location"));
-////				newUser.setImage(userEntity.getString("user_image"));
-//////				newUser.setPostalCode(userEntity.getString("user_postal_code"));
-////				
-////			}
-////			else {
-////			
-////			
-////			newUser.setUsername(userEntity.getKey().getName());
-////			newUser.setName(userEntity.getString("user_name"));
-////			newUser.setEmail(userEntity.getString("user_email"));
-////			newUser.setProfile(userEntity.getString("user_profile"));
-////			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
-////			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
-//////			newUser.setAddress(userEntity.getString("user_address"));
-////			newUser.setLocation(userEntity.getString("user_location"));
-//////			newUser.setPostalCode(userEntity.getString("user_postal_code"));
-////			newUser.setBirthday(userEntity.getString("user_birthday"));
-////			newUser.setGender(userEntity.getString("user_gender"));
-////			newUser.setImage(userEntity.getString("user_image"));
-////			}
-//			txn.commit();
-//			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
-//			
-//			
-//		}catch(Exception e) {
-//			txn.rollback();
-//			LOG.warning("exception "+ e.toString());
-//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-//		}finally {
-//			if(txn.isActive()) {
-//				txn.rollback();
-//				LOG.warning("entered finally");
-//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-//			}
-//		}
-//	}
 
 
 	 @GET
 	 @Path("/user/hours")
-	 @Consumes(MediaType.APPLICATION_JSON)
+	 //@Consumes(MediaType.APPLICATION_JSON)
 	 @Produces(MediaType.APPLICATION_JSON)
 	 public Response doGetUserHours(AuthToken token) {
 		 

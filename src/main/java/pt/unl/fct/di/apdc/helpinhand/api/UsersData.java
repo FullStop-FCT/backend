@@ -9,7 +9,7 @@ import com.google.cloud.datastore.Value;
 
 import pt.unl.fct.di.apdc.helpinhand.util.Profile;
 import pt.unl.fct.di.apdc.helpinhand.util.State;
-import pt.unl.fct.di.apdc.helpinhand.util.Kinds;
+//import pt.unl.fct.di.apdc.helpinhand.util.Kinds;
 
 public class UsersData {
 
@@ -31,15 +31,16 @@ public class UsersData {
 	//private long points;
 	private String image;
 	private long hoursDone;
-	private List<Value<?>> activities;
+	private List<Value<?>> joinedActivities;
 	private List<Value<?>> followings;
+	private List<Value<?>> followers;
 	private List<Value<?>> createdActivities;
-	
+	private boolean isOrg;
 
 	
 
 	private String role;
-	private String kind;
+	//private String kind;
 	//		private static final String USER = "USER";
 	//		private static final String GBO = "GBO"; //back office
 	//		private static final String GA = "GA"; //back end
@@ -61,14 +62,32 @@ public class UsersData {
 			String confirmation) {
 		this.username = username;
 		this.name = name;
+		this.password = password;
+		this.confirmation = confirmation;
+		this.hoursDone=0;
+		this.isOrg = false;
+		this.image =null;
+		this.joinedActivities = new ArrayList<>();
+		this.followings = new ArrayList<>();
+		this.createdActivities = new ArrayList<>();
+		
+		
+	}
+	
+	public UsersData(String username, String name, String email, String password, 
+			String confirmation, boolean isOrg) {
+		this.username = username;
+		this.name = name;
 		this.email = email;
 		this.password = password;
 		this.confirmation = confirmation;
 		this.hoursDone=0;
+		this.isOrg = false;
 		this.image =null;
-		this.activities = new ArrayList<>();
+		this.joinedActivities = new ArrayList<>();
 		this.followings = new ArrayList<>();
 		this.createdActivities = new ArrayList<>();
+		this.isOrg = isOrg;
 		
 		
 	}
@@ -87,7 +106,7 @@ public class UsersData {
 		this.gender=gender;
 		this.image=image;
 		this.hoursDone = 0;
-		this.activities = new ArrayList<>();
+		this.joinedActivities = new ArrayList<>();
 		this.followings = new ArrayList<>();
 		this.createdActivities = new ArrayList<>();
 		
@@ -224,13 +243,13 @@ public class UsersData {
 		this.gender = gender;
 	}
 
-	public String getKind() {
-		return kind;
-	}
-
-	public void setKind(String kind) {
-		this.kind = kind;
-	}
+//	public String getKind() {
+//		return kind;
+//	}
+//
+//	public void setKind(String kind) {
+//		this.kind = kind;
+//	}
 
 
 //	public long getPoints() {
@@ -263,13 +282,13 @@ public class UsersData {
 	}
 
 
-	public List<Value<?>> getActivities() {
-		return activities;
+	public List<Value<?>> getJoinedActivities() {
+		return joinedActivities;
 	}
 
 
-	public void setActivities(List<Value<?>> list) {
-		this.activities = list;
+	public void setJoinedActivities(List<Value<?>> list) {
+		this.joinedActivities = list;
 	}
 
 
@@ -290,6 +309,26 @@ public class UsersData {
 
 	public void setCreatedActivities(List<Value<?>> list) {
 		this.createdActivities = list;
+	}
+
+
+	public boolean isOrg() {
+		return isOrg;
+	}
+
+
+	public void setOrg(boolean isOrg) {
+		this.isOrg = isOrg;
+	}
+
+
+	public List<Value<?>> getFollowers() {
+		return followers;
+	}
+
+
+	public void setFollowers(List<Value<?>> followers) {
+		this.followers = followers;
 	}
 
 

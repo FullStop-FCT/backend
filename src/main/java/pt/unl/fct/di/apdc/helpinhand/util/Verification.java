@@ -70,4 +70,19 @@ public class Verification {
 		return false;
 	}
 	
+	
+//	public boolean existingOrgEmail(String email) {
+//		Query<Entity> query = Query.newEntityQueryBuilder()
+//				.setKind("Org")
+//				.setFilter(
+//						StructuredQuery.PropertyFilter.eq("org_email", email))
+//				.build();
+//		
+//		QueryResults<Entity> emailQuery = datastore.run(query);
+//	
+//		if(emailQuery.hasNext())
+//			return true;
+//
+//		return false;
+//	}
 }
