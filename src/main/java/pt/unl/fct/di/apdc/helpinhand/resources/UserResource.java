@@ -841,19 +841,20 @@ public class UserResource{
 		return Response.ok(" {} ").build();
 	//	return Response.status(Status.OK).entity(g.toJson(users)).build();
 		
-	}catch(Exception e) {
-		txn.rollback();
-		LOG.warning("exception "+ e.toString());
-		return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-	}finally {
-		if(txn.isActive()) {
+		}catch(Exception e) {
 			txn.rollback();
-			LOG.warning("entered finally");
-			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
 		}
 	}
-	}
 
+	
 
 	 @POST
 	 @Path("/user/hours")
@@ -921,6 +922,76 @@ public class UserResource{
 	 }
 	
 	
+	
+	@POST
+	@Path("/listorg")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doListOrgs(AuthToken token) {
+		 	Transaction txn = datastore.newTransaction();
+			
+			Key tokenKey = database.getTokenKey(token);
+			
+			Entity tokenEntity = txn.get(tokenKey);
+			try {
+//				if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+				if(tokenEntity == null) {
+					txn.rollback();
+					LOG.warning("Token Authentication Failed");
+					return Response.status(Status.FORBIDDEN).build();
+				}
+			
+				Query<Entity> query = Query.newEntityQueryBuilder()
+						.setKind("User")
+						.setFilter(
+								StructuredQuery.PropertyFilter.eq("is_org", true))
+//						.setOrderBy(OrderBy.desc("user_hours"))
+						.setLimit(25)
+						.build();
+				
+				QueryResults<Entity> rankingQuery = datastore.run(query);
+
+				List<UsersData> users = new ArrayList<>(); 
+				
+				rankingQuery.forEachRemaining(user -> {
+					UsersData nextUser = new UsersData();
+					
+					nextUser.setUsername(user.getKey().getName());
+					nextUser.setName(user.getString("user_name"));
+					nextUser.setEmail(user.getString("user_email"));
+					nextUser.setProfile(user.getString("user_profile"));
+					nextUser.setPhoneNumber(user.getString("user_phone_number"));
+					nextUser.setMobileNumber(user.getString("user_mobile_number"));
+					nextUser.setLocation(user.getString("user_location"));
+					nextUser.setFollowings(user.getList("user_following"));
+					
+					nextUser.setImage(user.getString("user_image"));
+					nextUser.setOrg(user.getBoolean("is_org"));
+					
+					users.add(nextUser);
+					
+				});
+			
+				txn.commit();
+//				return Response.ok(" {} ").build();
+				return Response.status(Status.OK).entity(g.toJson(users)).build();
+				
+			}catch(Exception e) {
+				txn.rollback();
+				LOG.warning("exception "+ e.toString());
+				return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+			}finally {
+				if(txn.isActive()) {
+					txn.rollback();
+					LOG.warning("entered finally");
+					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+				}
+			}
+	}
 	
 	
 	

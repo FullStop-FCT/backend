@@ -19,7 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-
+import com.google.appengine.repackaged.com.google.common.collect.Iterators;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
@@ -270,6 +270,93 @@ public class ActivityResource {
 
 //join activity
 	
+	@POST
+	@Path("/join/{activityID}/{activityOwner}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doJoin(AuthToken token, @PathParam("activityID") String activityID, @PathParam("activityOwner") String activityOwner) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+		
+		
+			Key joinKey = datastore.allocateId(factory
+					.addAncestors(PathElement.of("User", token.getUsername()), PathElement.of("Activity", activityID))
+					.setKind("UserJoinedActivity")
+					.newKey()
+					);
+			
+			Key activityKey = datastore.newKeyFactory()
+					.addAncestor(PathElement.of("User", activityOwner))
+					.setKind("Activity")
+					.newKey(activityID);
+			
+			Entity joinedEntity = txn.get(joinKey);
+			
+			if(joinedEntity != null) {
+				txn.rollback();
+				LOG.warning("This follow already exists");
+				return Response.status(Status.BAD_REQUEST).entity("Follow already exists.").build();
+			}
+			
+			Entity activityEntity = txn.get(activityKey);
+			
+			
+			String participants = activityEntity.getString("activity_total_participants");
+			String [] numbers = participants.split("/",2);
+			int part = Integer.valueOf(numbers[0]);
+			int total = Integer.valueOf(numbers[1]);
+			part++;
+			
+			if(part>total) {
+				txn.rollback();
+				LOG.warning("This activity is full :(");
+				return Response.status(Status.BAD_REQUEST).entity("Activity is full :(").build();
+			}
+			activityEntity = Entity.newBuilder(datastore.get(activityKey))
+					.set("activity_total_participants", part+"/"+total)
+					.build();
+			
+			joinedEntity = Entity.newBuilder(joinKey)
+					.set("activity_ID", activityID)
+					.set("user_username", token.getUsername())
+					.build();
+			
+			txn.update(activityEntity);
+			txn.add(joinedEntity);
+			LOG.warning("joined activity " + activityID );
+			
+			txn.commit();
+			return Response.ok(" {} ").build();
+
+		
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+			
+	}
 
 	
 //add hours
@@ -335,6 +422,9 @@ public class ActivityResource {
 				
 				
 			});
+			
+			//int count = Iterators.size(datastore.run(query));
+			//LOG.warning("size: " + count);
 			
 			txn.commit();
 			return Response.status(Status.OK).entity(g.toJson(activities)).build();
