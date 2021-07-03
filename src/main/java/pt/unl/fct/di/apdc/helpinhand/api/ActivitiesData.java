@@ -47,7 +47,7 @@ public class ActivitiesData {
 		this.setLon(lon);
 		this.setStartHour(startHour);
 		this.setEndHour(endHour);
-		this.setPoints(100);
+//		this.setPoints(100);
 		this.keywords = keywords;
 		this.setParticipants(null);
 		

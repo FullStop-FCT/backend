@@ -336,6 +336,8 @@ public class ActivityResource {
 					.set("user_username", token.getUsername())
 					.build();
 			
+
+			
 			txn.update(activityEntity);
 			txn.add(joinedEntity);
 			LOG.warning("joined activity " + activityID );
@@ -545,6 +547,7 @@ public class ActivityResource {
 				ActivitiesData nextActivity = new ActivitiesData();
 //				nextActivity.s(activity.getKey().getId())
 //				nextActivity.setID(activity.getKey().getName());
+				nextActivity.setID(activity.getKey().getName());
 				nextActivity.setTitle(activity.getString("activity_title"));
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
@@ -573,6 +576,80 @@ public class ActivityResource {
 			}
 		}
 		
+	}
+	
+	
+	@POST
+	@Path("/get/{activityID}/{activityOwner}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetActivity(AuthToken token, @PathParam("activityID") String activityID, @PathParam("activityOwner") String activityOwner) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		Key activityKey = datastore.newKeyFactory()
+				.addAncestor(PathElement.of("User", activityOwner))
+				.setKind("Activity")
+				.newKey(activityID);
+		
+		try {
+			
+			Entity activityEntity = txn.get(activityKey);
+			
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+		
+			if(activityEntity == null) {
+				txn.rollback();
+				LOG.warning("No such activity");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			ActivitiesData newActivity = new ActivitiesData();
+			
+			newActivity.setID(activityEntity.getKey().getName());
+			newActivity.setTitle(activityEntity.getString("activity_title"));
+			newActivity.setDescription(activityEntity.getString("activity_description"));
+			newActivity.setDate(activityEntity.getString("activity_date"));
+			newActivity.setLocation(activityEntity.getString("activity_location"));
+			newActivity.setTotalParticipants(activityEntity.getString("activity_total_participants"));
+			newActivity.setCategory(activityEntity.getString("activity_category"));
+			newActivity.setActivityOwner(activityOwner);
+			newActivity.setLat(activityEntity.getString("activity_lat"));
+			newActivity.setLon(activityEntity.getString("activity_lon"));
+			newActivity.setStartHour(activityEntity.getString("activity_startHour"));
+			newActivity.setEndHour(activityEntity.getString("activity_endHour"));
+			//newActivity.setParticipants(activityEntity.getList("activity_participants"));
+			newActivity.setKeywords(convertToList(activityEntity.getList("activity_keywords")));
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(newActivity)).build();
+			
+
+
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
 	}
 	
 	
