@@ -169,10 +169,15 @@ public class ActivityResource {
 				
 				long createdActivities = userEntity.getLong("created_activities")+1;
 				
-				userEntity = Entity.newBuilder(userKey)
+				Entity newUser = Entity.newBuilder(userEntity)
 						.set("created_activities", createdActivities)
 						.build();
-				txn.update(userEntity);
+				txn.update(newUser);
+				
+//				userEntity = Entity.newBuilder(userKey)
+//						.set("created_activities", createdActivities)
+//						.build();
+//				txn.update(userEntity);
 				
 				LOG.warning("activity registered " + request.getActivityData().getTitle());
 				txn.commit();
@@ -308,11 +313,10 @@ public class ActivityResource {
 			}
 		
 		
-			Key joinKey = datastore.allocateId(factory
+			Key joinKey = datastore.newKeyFactory()
 					.addAncestors(PathElement.of("User", token.getUsername()), PathElement.of("Activity", activityID))
 					.setKind("UserJoinedActivity")
-					.newKey()
-					);
+					.newKey(token.getUsername());
 			
 			Key activityKey = datastore.newKeyFactory()
 					.addAncestor(PathElement.of("User", activityOwner))
@@ -330,24 +334,26 @@ public class ActivityResource {
 			Entity activityEntity = txn.get(activityKey);
 			
 			
-			String participants = activityEntity.getString("activity_total_participants");
-			String [] numbers = participants.split("/",2);
-			int part = Integer.valueOf(numbers[0]);
-			int total = Integer.valueOf(numbers[1]);
-			part++;
+			long participants = activityEntity.getLong("activity_participants");
+			long total = activityEntity.getLong("activity_total_participants");
+//			String [] numbers = participants.split("/",2);
+//			int part = Integer.valueOf(numbers[0]);
+//			int total = Integer.valueOf(numbers[1]);
+//			part++;
 			
-			if(part>total) {
+			if(participants>total) {
 				txn.rollback();
 				LOG.warning("This activity is full :(");
 				return Response.status(Status.BAD_REQUEST).entity("Activity is full :(").build();
 			}
 			activityEntity = Entity.newBuilder(datastore.get(activityKey))
-					.set("activity_total_participants", part+"/"+total)
+					.set("activity_participants", participants)
 					.build();
 			
 			joinedEntity = Entity.newBuilder(joinKey)
 					.set("activity_ID", activityID)
-					.set("user_username", token.getUsername())
+					.set("activity_title", activityEntity.getString("activity_title"))
+//					.set("user_username", token.getUsername())
 					.build();
 			
 

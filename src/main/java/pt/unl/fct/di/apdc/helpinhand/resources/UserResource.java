@@ -939,6 +939,9 @@ public class UserResource{
 				.newKey(username);
 		
 		Entity followEntity = txn.get(followKey);
+		
+
+		
 
 		if(followEntity !=null) {
 			txn.rollback();
@@ -946,6 +949,26 @@ public class UserResource{
 			return Response.status(Status.BAD_REQUEST).entity("Follow already exists.").build();
 		}
 
+		
+		Key selfUserKey = database.getUserKey(token.getUsername());
+		Key targetUserKey = database.getUserKey(username);
+		
+		Entity selfEntity = txn.get(selfUserKey);
+		Entity targetEntity = txn.get(targetUserKey);
+		
+		long followings = selfEntity.getLong("user_following")+1;
+		long followers = targetEntity.getLong("user_followers")+1; 
+		
+		Entity newSelf = Entity.newBuilder(selfEntity)
+				.set("user_following", followings)
+				.build();
+		
+		Entity newTarget = Entity.newBuilder(targetEntity)
+				.set("user_followers", followers)
+				.build();
+		
+		txn.update(newSelf, newTarget);
+		
 
 		LOG.warning("follow on user " + username + " registered");
 
