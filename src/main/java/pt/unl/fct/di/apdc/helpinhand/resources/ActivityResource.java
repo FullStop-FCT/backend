@@ -327,14 +327,14 @@ public class ActivityResource {
 			
 			if(joinedEntity != null) {
 				txn.rollback();
-				LOG.warning("This follow already exists");
-				return Response.status(Status.BAD_REQUEST).entity("Follow already exists.").build();
+				LOG.warning("This user already joined this activity");
+				return Response.status(Status.BAD_REQUEST).entity("This user already joined this activity.").build();
 			}
 			
 			Entity activityEntity = txn.get(activityKey);
 			
 			
-			long participants = activityEntity.getLong("activity_participants");
+			long participants = activityEntity.getLong("activity_participants")+1;
 			long total = activityEntity.getLong("activity_total_participants");
 //			String [] numbers = participants.split("/",2);
 //			int part = Integer.valueOf(numbers[0]);
@@ -677,7 +677,7 @@ public class ActivityResource {
 	}
 	
 	
-	
+	@Deprecated
 	@GET
 	@Path("/get/{username}/{title}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -761,6 +761,8 @@ public class ActivityResource {
 	}
 	
 	
+	
+	@Deprecated
 	@GET
 	@Path("/get/{title}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -840,6 +842,8 @@ public class ActivityResource {
 	
 	
 	
+	
+	@Deprecated
 	@DELETE
 	@Path("/delete/{title}")
 	@Consumes(MediaType.APPLICATION_JSON)

@@ -253,7 +253,7 @@ public class UserResource{
 		.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-		.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_image", StringValue.newBuilder("default.png").setExcludeFromIndexes(true).build())
 //		.set("user_following", ListValue.newBuilder().build()) //followed orgs //LONG incrementar e decrementar metodo
 //		.set("created_activities", ListValue.newBuilder().build())
 		.set("user_following", LongValue.newBuilder(0).build()) //followed orgs //LONG incrementar e decrementar metodo
@@ -284,7 +284,7 @@ public class UserResource{
 		.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-		.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+		.set("user_image", StringValue.newBuilder("default.png").setExcludeFromIndexes(true).build())
 //		.set("user_following", ListValue.newBuilder().build()) //followed orgs
 //		.set("org_followers", ListValue.newBuilder().build())
 //		.set("created_activities", ListValue.newBuilder().build())
