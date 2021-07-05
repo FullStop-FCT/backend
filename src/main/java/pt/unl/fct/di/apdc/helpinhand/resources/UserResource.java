@@ -10,6 +10,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -253,8 +254,10 @@ public class UserResource{
 		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-		.set("user_following", ListValue.newBuilder().build()) //followed orgs
-		.set("created_activities", ListValue.newBuilder().build())
+//		.set("user_following", ListValue.newBuilder().build()) //followed orgs //LONG incrementar e decrementar metodo
+//		.set("created_activities", ListValue.newBuilder().build())
+		.set("user_following", LongValue.newBuilder(0).build()) //followed orgs //LONG incrementar e decrementar metodo
+		.set("created_activities", LongValue.newBuilder(0).build())
 		.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
 		.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
 		.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
@@ -262,10 +265,13 @@ public class UserResource{
 		.set("last_time_modified", Timestamp.now())
 		.set("is_org", false)
 
+		
+		.set("user_followers", LongValue.newBuilder(0).build())
 		.set("user_gender", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_birthday", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_hours", userData.getHoursDone())
-		.set("user_joined_activities", ListValue.newBuilder().build())
+//		.set("user_joined_activities", ListValue.newBuilder().build())
+		.set("user_joined_activities", LongValue.newBuilder(0).build())
 		.build();
 	}
 	
@@ -279,9 +285,11 @@ public class UserResource{
 		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_image", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-		.set("user_following", ListValue.newBuilder().build()) //followed orgs
-		.set("org_followers", ListValue.newBuilder().build())
-		.set("created_activities", ListValue.newBuilder().build())
+//		.set("user_following", ListValue.newBuilder().build()) //followed orgs
+//		.set("org_followers", ListValue.newBuilder().build())
+//		.set("created_activities", ListValue.newBuilder().build())
+		.set("user_following", LongValue.newBuilder(0).build()) //followed orgs //LONG incrementar e decrementar metodo
+		.set("created_activities", LongValue.newBuilder(0).build())
 		.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
 		.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
 		.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
@@ -291,7 +299,8 @@ public class UserResource{
 		
 
 		//.set("org_followers", LongValue.newBuilder(0).setExcludeFromIndexes(true).build())
-		.set("org_followers", ListValue.newBuilder().build())
+//		.set("org_followers", ListValue.newBuilder().build())
+		.set("user_followers", LongValue.newBuilder(0).build())
 		.build();
 	}
 	
@@ -570,9 +579,6 @@ public class UserResource{
 	}
 	
 	
-	
-	
-	
 	@POST
 	@Path("/get/{username}")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -644,21 +650,18 @@ public class UserResource{
 				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
 				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
 				newUser.setLocation(userEntity.getString("user_location"));
-				newUser.setFollowings(userEntity.getList("user_following"));
+				newUser.setFollowings(userEntity.getLong("user_following"));
 				
 				newUser.setImage(userEntity.getString("user_image"));
 				newUser.setOrg(userEntity.getBoolean("is_org"));
-				newUser.setCreatedActivities(userEntity.getList("created_activities"));
+				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
 				
 
 				if(userEntity.contains("user_joined_activities") )
-					newUser.setJoinedActivities(userEntity.getList("user_joined_activities"));
-//				if(userEntity.contains("created_activities"))
-//					
-//				if(userEntity.contains("user_following"))
-//				
+					newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
+			
 				if(userEntity.contains("org_followers"))
-					newUser.setFollowers(userEntity.getList("org_followers"));
+					newUser.setFollowers(userEntity.getLong("org_followers"));
 				if(userEntity.contains("user_birthday"))
 					newUser.setBirthday(userEntity.getString("user_birthday"));
 				if(userEntity.contains("user_gender"))
@@ -682,6 +685,120 @@ public class UserResource{
 		}
 		
 	}
+	
+	
+	@GET
+	@Path("/self/{username}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUser(@PathParam("username") String username) {
+		
+		 
+		Transaction txn = datastore.newTransaction();
+		
+//		Key tokenKey = database.getTokenKey(token);
+		
+//		Entity tokenEntity = txn.get(tokenKey);
+		
+		Key userKey = database.getUserKey(username);
+
+//		Key userKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("Parent", username))
+//				.setKind("Supporter")
+//				.newKey(username);
+
+		
+		try {
+			Entity userEntity = txn.get(userKey);
+			
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+				UsersData newUser = new UsersData();
+				
+				newUser.setUsername(userEntity.getKey().getName());
+				newUser.setName(userEntity.getString("user_name"));
+				newUser.setImage(userEntity.getString("user_image"));
+				
+				txn.commit();
+				return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+			}
+
+			
+				UsersData newUser = new UsersData();
+				//List<com.google.cloud.datastore.Value<?>> list = userEntity.contains("user_activities") ? userEntity.getList("user_activities") : new List;
+				
+
+				
+				newUser.setUsername(userEntity.getKey().getName());
+				newUser.setName(userEntity.getString("user_name"));
+				newUser.setEmail(userEntity.getString("user_email"));
+				newUser.setProfile(userEntity.getString("user_profile"));
+				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+				newUser.setLocation(userEntity.getString("user_location"));
+				newUser.setFollowings(userEntity.getLong("user_following"));
+				
+				newUser.setImage(userEntity.getString("user_image"));
+				newUser.setOrg(userEntity.getBoolean("is_org"));
+				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+				
+
+				if(userEntity.contains("user_joined_activities") )
+					newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
+//				if(userEntity.contains("created_activities"))
+//					
+//				if(userEntity.contains("user_following"))
+//				
+				if(userEntity.contains("org_followers"))
+					newUser.setFollowers(userEntity.getLong("org_followers"));
+				if(userEntity.contains("user_birthday"))
+					newUser.setBirthday(userEntity.getString("user_birthday"));
+				if(userEntity.contains("user_gender"))
+					newUser.setGender(userEntity.getString("user_gender"));
+ 
+
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
+	
+	
+	
 	
 	
 	@POST
@@ -751,21 +868,21 @@ public class UserResource{
 			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
 			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
 			newUser.setLocation(userEntity.getString("user_location"));
-			newUser.setFollowings(userEntity.getList("user_following"));
+			newUser.setFollowings(userEntity.getLong("user_following"));
 			
 			newUser.setImage(userEntity.getString("user_image"));
 			newUser.setOrg(userEntity.getBoolean("is_org"));
-			newUser.setCreatedActivities(userEntity.getList("created_activities"));
+			newUser.setCreatedActivities(userEntity.getLong("created_activities"));
 			
 
 			if(userEntity.contains("user_joined_activities") )
-				newUser.setJoinedActivities(userEntity.getList("user_joined_activities"));
+				newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
 //			if(userEntity.contains("created_activities"))
 //				
 //			if(userEntity.contains("user_following"))
 //			
 			if(userEntity.contains("org_followers"))
-				newUser.setFollowers(userEntity.getList("org_followers"));
+				newUser.setFollowers(userEntity.getLong("org_followers"));
 			if(userEntity.contains("user_birthday"))
 				newUser.setBirthday(userEntity.getString("user_birthday"));
 			if(userEntity.contains("user_gender"))
@@ -802,6 +919,7 @@ public class UserResource{
 		
 		Entity tokenEntity = txn.get(tokenKey);
 		try {
+			
 //			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
 //			txn.rollback();
 //			LOG.warning("Token Authentication Failed");
@@ -815,32 +933,33 @@ public class UserResource{
 		}
 		
 		
-		Key followKey = datastore.allocateId(factory
+		Key followKey = factory
 				.addAncestors(PathElement.of("User", token.getUsername()),PathElement.of("User", username))
 				.setKind("Following")
-				.newKey()
-				);
+				.newKey(username);
 		
 		Entity followEntity = txn.get(followKey);
-		
+
 		if(followEntity !=null) {
 			txn.rollback();
 			LOG.warning("This follow already exists");
 			return Response.status(Status.BAD_REQUEST).entity("Follow already exists.").build();
 		}
-		
-		followEntity = Entity.newBuilder(followKey)
-				.set("following", username)
-				.build();
-			
-			
-		txn.add(followEntity);
+
+
 		LOG.warning("follow on user " + username + " registered");
-			
+
+		followEntity = Entity.newBuilder(followKey)
+				.set("follower", token.getUsername())
+//				.set("following", token.getUsername())
+				.build();
+		
+
+		txn.add(followEntity);
+		
 		txn.commit();
 		return Response.ok(" {} ").build();
-	//	return Response.status(Status.OK).entity(g.toJson(users)).build();
-		
+
 		}catch(Exception e) {
 			txn.rollback();
 			LOG.warning("exception "+ e.toString());
@@ -852,6 +971,8 @@ public class UserResource{
 				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 			}
 		}
+
+		
 	}
 
 	
@@ -925,6 +1046,7 @@ public class UserResource{
 	
 	@POST
 	@Path("/listorg")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doListOrgs(AuthToken token) {
 		 	Transaction txn = datastore.newTransaction();
@@ -967,7 +1089,7 @@ public class UserResource{
 					nextUser.setPhoneNumber(user.getString("user_phone_number"));
 					nextUser.setMobileNumber(user.getString("user_mobile_number"));
 					nextUser.setLocation(user.getString("user_location"));
-					nextUser.setFollowings(user.getList("user_following"));
+					nextUser.setFollowings(user.getLong("user_following"));
 					
 					nextUser.setImage(user.getString("user_image"));
 					nextUser.setOrg(user.getBoolean("is_org"));

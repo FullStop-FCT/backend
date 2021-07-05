@@ -15,12 +15,12 @@ public class ActivitiesData {
 	private String location;
 	private String lat;
 	private String lon;
-	private String totalParticipants;
+	private long totalParticipants;
 	private String activityOwner;
 	private String category;
-	private List<String> participants;
+	private long participants;
 	private String ID;
-	private long points;
+	//private long points;
 	private String startHour;
 	private String endHour;
 	private List<String> keywords;
@@ -31,7 +31,7 @@ public class ActivitiesData {
 	}
 	
 	public ActivitiesData(String title, String description, String date, String location, 
-			String totalParticipants, String activityOwner, String category, String lat, String lon, 
+			long totalParticipants, String activityOwner, String category, String lat, String lon, 
 			String startHour, String endHour, List<String> keywords) {
 //		this.ID = UUID.randomUUID().fromString(title).toString();
 		this.ID = UUID.randomUUID().randomUUID().toString();
@@ -49,7 +49,7 @@ public class ActivitiesData {
 		this.setEndHour(endHour);
 //		this.setPoints(100);
 		this.keywords = keywords;
-		this.setParticipants(null);
+		this.participants =0;
 		
 	}
 
@@ -94,12 +94,12 @@ public class ActivitiesData {
 	}
 
 
-	public String getTotalParticipants() {
+	public long getTotalParticipants() {
 		return totalParticipants;
 	}
 
 
-	public void setTotalParticipants(String	 peopleNumber) {
+	public void setTotalParticipants(long peopleNumber) {
 		this.totalParticipants = peopleNumber;
 	}
 
@@ -181,13 +181,13 @@ public class ActivitiesData {
 		this.endHour = endHour;
 	}
 
-	public long getPoints() {
-		return points;
-	}
-
-	public void setPoints(long points) {
-		this.points = points;
-	}
+//	public long getPoints() {
+//		return points;
+//	}
+//
+//	public void setPoints(long points) {
+//		this.points = points;
+//	}
 
 	public List<String> getKeywords() {
 		return keywords;
@@ -197,11 +197,11 @@ public class ActivitiesData {
 		this.keywords = keywords;
 	}
 
-	public List<String> getParticipants() {
+	public long getParticipants() {
 		return participants;
 	}
 
-	public void setParticipants(List<String> participants) {
+	public void setParticipants(long participants) {
 		this.participants = participants;
 	}
 

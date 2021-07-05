@@ -31,10 +31,10 @@ public class UsersData {
 	//private long points;
 	private String image;
 	private long hoursDone;
-	private List<Value<?>> joinedActivities;
-	private List<Value<?>> followings;
-	private List<Value<?>> followers;
-	private List<Value<?>> createdActivities;
+	private long joinedActivities;
+	private long followings;
+	private long followers;
+	private long createdActivities;
 	private boolean isOrg;
 
 	
@@ -67,9 +67,9 @@ public class UsersData {
 		this.hoursDone=0;
 		this.isOrg = false;
 		this.image =null;
-		this.joinedActivities = new ArrayList<>();
-		this.followings = new ArrayList<>();
-		this.createdActivities = new ArrayList<>();
+		this.joinedActivities = 0;
+		this.followings = 0;
+		this.createdActivities = 0;
 		
 		
 	}
@@ -84,9 +84,10 @@ public class UsersData {
 		this.hoursDone=0;
 		this.isOrg = false;
 		this.image =null;
-		this.joinedActivities = new ArrayList<>();
-		this.followings = new ArrayList<>();
-		this.createdActivities = new ArrayList<>();
+//		this.joinedActivities = 0;
+		this.followings = 0;
+		this.createdActivities = 0;
+		this.followers = 0;
 		this.isOrg = isOrg;
 
 	}
@@ -105,9 +106,9 @@ public class UsersData {
 		this.gender=gender;
 		this.image=image;
 		this.hoursDone = 0;
-		this.joinedActivities = new ArrayList<>();
-		this.followings = new ArrayList<>();
-		this.createdActivities = new ArrayList<>();
+//		this.joinedActivities = new ArrayList<>();
+//		this.followings = new ArrayList<>();
+//		this.createdActivities = new ArrayList<>();
 		
 	}
 	
@@ -281,33 +282,33 @@ public class UsersData {
 	}
 
 
-	public List<Value<?>> getJoinedActivities() {
+	public long getJoinedActivities() {
 		return joinedActivities;
 	}
 
 
-	public void setJoinedActivities(List<Value<?>> list) {
-		this.joinedActivities = list;
+	public void setJoinedActivities(long number) {
+		this.joinedActivities = number;
 	}
 
 
-	public List<Value<?>> getFollowings() {
+	public long getFollowings() {
 		return followings;
 	}
 
 
-	public void setFollowings(List<Value<?>> list) {
-		this.followings = list;
+	public void setFollowings(long number) {
+		this.followings = number;
 	}
 
 
-	public List<Value<?>> getCreatedActivities() {
+	public long getCreatedActivities() {
 		return createdActivities;
 	}
 
 
-	public void setCreatedActivities(List<Value<?>> list) {
-		this.createdActivities = list;
+	public void setCreatedActivities(long number) {
+		this.createdActivities = number;
 	}
 
 
@@ -321,12 +322,12 @@ public class UsersData {
 	}
 
 
-	public List<Value<?>> getFollowers() {
+	public long getFollowers() {
 		return followers;
 	}
 
 
-	public void setFollowers(List<Value<?>> followers) {
+	public void setFollowers(long followers) {
 		this.followers = followers;
 	}
 

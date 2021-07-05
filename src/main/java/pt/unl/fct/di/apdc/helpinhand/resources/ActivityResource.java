@@ -117,8 +117,13 @@ public class ActivityResource {
 					.setKind("Activity")
 					.newKey(act.getID());
 			
+			Key userKey = database.getUserKey(request.getToken().getUsername());
+			
+			Entity userEntity = txn.get(userKey);
+			
 			Key createdKey = datastore.allocateId(factory
-					.addAncestors(PathElement.of("User", act.getActivityOwner()), PathElement.of("Activity", act.getID()))
+//					.addAncestors(PathElement.of("User", act.getActivityOwner()), PathElement.of("Activity", act.getID()))
+					.addAncestor(PathElement.of("Activity", act.getID()))
 					.setKind("CreatedActivityBy")
 					.newKey()
 					);
@@ -139,7 +144,8 @@ public class ActivityResource {
 						.set("activity_description", request.getActivityData().getDescription())
 						.set("activity_date", request.getActivityData().getDate())
 						.set("activity_location", request.getActivityData().getLocation())
-						.set("activity_total_participants", "0/"+request.getActivityData().getTotalParticipants())
+						.set("activity_participants", request.getActivityData().getParticipants()) //added
+						.set("activity_total_participants", request.getActivityData().getTotalParticipants()) //reworked
 //						.set("activity_participants", request.getActivityData().getList());
 						.set("activity_category", request.getActivityData().getCategory())
 						.set("activity_owner", request.getToken().getUsername())
@@ -148,7 +154,7 @@ public class ActivityResource {
 						.set("activity_startHour", request.getActivityData().getStartHour())
 						.set("activity_endHour", request.getActivityData().getEndHour())
 						
-						.set("activity_participants", ListValue.newBuilder().build())
+						//.set("activity_participants", ListValue.newBuilder().build())
 //						.set("activity_keywords", ListValue.of(request.getActivityData().getKeywords()))
 //						.set("activity_keywords", ListValue.newBuilder().set(request.getActivityData().getKeywords()).build())
 						.set("activity_keywords", convertToValueList(request.getActivityData().getKeywords()))
@@ -160,6 +166,14 @@ public class ActivityResource {
 						.build();
 				
 				txn.add(activityEntity, createdActivityEntity);
+				
+				long createdActivities = userEntity.getLong("created_activities")+1;
+				
+				userEntity = Entity.newBuilder(userKey)
+						.set("created_activities", createdActivities)
+						.build();
+				txn.update(userEntity);
+				
 				LOG.warning("activity registered " + request.getActivityData().getTitle());
 				txn.commit();
 				
@@ -416,7 +430,8 @@ public class ActivityResource {
 				newAct.setLon(activity.getString("activity_lon"));
 				newAct.setLocation(activity.getString("activity_location"));
 				newAct.setActivityOwner(activity.getString("activity_owner"));
-				newAct.setTotalParticipants(activity.getString("activity_total_participants"));
+				newAct.setParticipants(activity.getLong("activity_participants"));
+				newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
 				newAct.setTitle(activity.getString("activity_title"));
 				//newAct.setParticipants(convertToList(activity.getList("activity_participants")));
 				
@@ -453,7 +468,8 @@ public class ActivityResource {
 				newAct.setLon(activity.getString("activity_lon"));
 				newAct.setLocation(activity.getString("activity_location"));
 				newAct.setActivityOwner(activity.getString("activity_owner"));
-				newAct.setTotalParticipants(activity.getString("activity_total_participants"));
+				newAct.setParticipants(activity.getLong("activity_participants"));
+				newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
 				newAct.setTitle(activity.getString("activity_title"));
 				//newAct.setParticipants(convertToList(activity.getList("activity_participants")));
 				
@@ -552,7 +568,8 @@ public class ActivityResource {
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
 				nextActivity.setLocation(activity.getString("activity_location"));
-				nextActivity.setTotalParticipants(activity.getString("activity_total_participants"));
+				nextActivity.setParticipants(activity.getLong("activity_participants"));
+				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
 				nextActivity.setDate(activity.getString("activity_date"));
 				nextActivity.setActivityOwner(activity.getString("activity_owner"));
 				
@@ -623,7 +640,8 @@ public class ActivityResource {
 			newActivity.setDescription(activityEntity.getString("activity_description"));
 			newActivity.setDate(activityEntity.getString("activity_date"));
 			newActivity.setLocation(activityEntity.getString("activity_location"));
-			newActivity.setTotalParticipants(activityEntity.getString("activity_total_participants"));
+			newActivity.setParticipants(activityEntity.getLong("activity_participants"));
+			newActivity.setTotalParticipants(activityEntity.getLong("activity_total_participants"));
 			newActivity.setCategory(activityEntity.getString("activity_category"));
 			newActivity.setActivityOwner(activityOwner);
 			newActivity.setLat(activityEntity.getString("activity_lat"));
@@ -694,7 +712,8 @@ public class ActivityResource {
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
 				nextActivity.setLocation(activity.getString("activity_location"));
-				nextActivity.setTotalParticipants(activity.getString("activity_total_participants"));
+				nextActivity.setParticipants(activity.getLong("activity_participants"));
+				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
 				nextActivity.setDate(activity.getString("activity_date"));
 				nextActivity.setActivityOwner(activity.getString("activity_owner"));
 				
@@ -772,7 +791,8 @@ public class ActivityResource {
 				nextActivity.setDescription(activity.getString("activity_description"));
 				nextActivity.setCategory(activity.getString("activity_category"));
 				nextActivity.setLocation(activity.getString("activity_location"));
-				nextActivity.setTotalParticipants(activity.getString("activity_total_participants"));
+				nextActivity.setParticipants(activity.getLong("activity_participants"));
+				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
 				nextActivity.setDate(activity.getString("activity_date"));
 				nextActivity.setActivityOwner(activity.getString("activity_owner"));
 				
