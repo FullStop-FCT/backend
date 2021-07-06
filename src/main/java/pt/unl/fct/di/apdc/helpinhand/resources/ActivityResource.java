@@ -43,6 +43,7 @@ import com.google.gson.Gson;
 import pt.unl.fct.di.apdc.helpinhand.api.ActivitiesData;
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
 import pt.unl.fct.di.apdc.helpinhand.api.Request;
+import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
 
 @Path("/activities")
@@ -383,6 +384,26 @@ public class ActivityResource {
 	
 //add hours
 	
+	
+	private ActivitiesData createActivity(Entity activity) {
+		ActivitiesData newAct = new ActivitiesData();
+		newAct.setID(activity.getKey().getName());
+		newAct.setCategory(activity.getString("activity_category"));
+		newAct.setDate(activity.getString("activity_date"));
+		newAct.setDescription(activity.getString("activity_description"));
+		newAct.setStartHour(activity.getString("activity_startHour"));
+		newAct.setEndHour(activity.getString("activity_endHour"));
+		newAct.setKeywords(convertToList(activity.getList("activity_keywords")));
+		newAct.setLat(activity.getString("activity_lat"));
+		newAct.setLon(activity.getString("activity_lon"));
+		newAct.setLocation(activity.getString("activity_location"));
+		newAct.setActivityOwner(activity.getString("activity_owner"));
+		newAct.setParticipants(activity.getLong("activity_participants"));
+		newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
+		newAct.setTitle(activity.getString("activity_title"));
+		
+		return newAct;
+	}
 		
 //	
 	@POST
@@ -425,20 +446,22 @@ public class ActivityResource {
 			List<ActivitiesData> activities = new ArrayList<>();
 			
 			search.forEachRemaining(activity ->{
-				ActivitiesData newAct = new ActivitiesData();
-				newAct.setCategory(activity.getString("activity_category"));
-				newAct.setDate(activity.getString("activity_date"));
-				newAct.setDescription(activity.getString("activity_description"));
-				newAct.setStartHour(activity.getString("activity_startHour"));
-				newAct.setEndHour(activity.getString("activity_endHour"));
-				newAct.setKeywords(convertToList(activity.getList("activity_keywords")));
-				newAct.setLat(activity.getString("activity_lat"));
-				newAct.setLon(activity.getString("activity_lon"));
-				newAct.setLocation(activity.getString("activity_location"));
-				newAct.setActivityOwner(activity.getString("activity_owner"));
-				newAct.setParticipants(activity.getLong("activity_participants"));
-				newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
-				newAct.setTitle(activity.getString("activity_title"));
+				ActivitiesData newAct = createActivity(activity);
+						
+//						new ActivitiesData();
+//				newAct.setCategory(activity.getString("activity_category"));
+//				newAct.setDate(activity.getString("activity_date"));
+//				newAct.setDescription(activity.getString("activity_description"));
+//				newAct.setStartHour(activity.getString("activity_startHour"));
+//				newAct.setEndHour(activity.getString("activity_endHour"));
+//				newAct.setKeywords(convertToList(activity.getList("activity_keywords")));
+//				newAct.setLat(activity.getString("activity_lat"));
+//				newAct.setLon(activity.getString("activity_lon"));
+//				newAct.setLocation(activity.getString("activity_location"));
+//				newAct.setActivityOwner(activity.getString("activity_owner"));
+//				newAct.setParticipants(activity.getLong("activity_participants"));
+//				newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
+//				newAct.setTitle(activity.getString("activity_title"));
 				//newAct.setParticipants(convertToList(activity.getList("activity_participants")));
 				
 				activities.add(newAct);
@@ -463,20 +486,21 @@ public class ActivityResource {
 			List<ActivitiesData> activities = new ArrayList<>();
 			
 			search.forEachRemaining(activity ->{
-				ActivitiesData newAct = new ActivitiesData();
-				newAct.setCategory(activity.getString("activity_category"));
-				newAct.setDate(activity.getString("activity_date"));
-				newAct.setDescription(activity.getString("activity_description"));
-				newAct.setStartHour(activity.getString("activity_startHour"));
-				newAct.setEndHour(activity.getString("activity_endHour"));
-				newAct.setKeywords(convertToList(activity.getList("activity_keywords")));
-				newAct.setLat(activity.getString("activity_lat"));
-				newAct.setLon(activity.getString("activity_lon"));
-				newAct.setLocation(activity.getString("activity_location"));
-				newAct.setActivityOwner(activity.getString("activity_owner"));
-				newAct.setParticipants(activity.getLong("activity_participants"));
-				newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
-				newAct.setTitle(activity.getString("activity_title"));
+				ActivitiesData newAct = createActivity(activity);
+//				ActivitiesData newAct = new ActivitiesData();
+//				newAct.setCategory(activity.getString("activity_category"));
+//				newAct.setDate(activity.getString("activity_date"));
+//				newAct.setDescription(activity.getString("activity_description"));
+//				newAct.setStartHour(activity.getString("activity_startHour"));
+//				newAct.setEndHour(activity.getString("activity_endHour"));
+//				newAct.setKeywords(convertToList(activity.getList("activity_keywords")));
+//				newAct.setLat(activity.getString("activity_lat"));
+//				newAct.setLon(activity.getString("activity_lon"));
+//				newAct.setLocation(activity.getString("activity_location"));
+//				newAct.setActivityOwner(activity.getString("activity_owner"));
+//				newAct.setParticipants(activity.getLong("activity_participants"));
+//				newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
+//				newAct.setTitle(activity.getString("activity_title"));
 				//newAct.setParticipants(convertToList(activity.getList("activity_participants")));
 				
 				activities.add(newAct);
@@ -504,7 +528,9 @@ public class ActivityResource {
 		}
 		
 	}
-//	
+
+	
+	
 
 	//LISTA TODAS - ADICIONAR O FILTRO PARA LISTAR SO AS DO USER
 	@POST
@@ -566,20 +592,26 @@ public class ActivityResource {
 			List<ActivitiesData> activities = new ArrayList<>();
 			
 			titlesQuery.forEachRemaining(activity -> {
-				ActivitiesData nextActivity = new ActivitiesData();
+				
+				ActivitiesData newAct = createActivity(activity);
+
+//				ActivitiesData nextActivity = new ActivitiesData();
 //				nextActivity.s(activity.getKey().getId())
 //				nextActivity.setID(activity.getKey().getName());
-				nextActivity.setID(activity.getKey().getName());
-				nextActivity.setTitle(activity.getString("activity_title"));
-				nextActivity.setDescription(activity.getString("activity_description"));
-				nextActivity.setCategory(activity.getString("activity_category"));
-				nextActivity.setLocation(activity.getString("activity_location"));
-				nextActivity.setParticipants(activity.getLong("activity_participants"));
-				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
-				nextActivity.setDate(activity.getString("activity_date"));
-				nextActivity.setActivityOwner(activity.getString("activity_owner"));
+//				nextActivity.setID(activity.getKey().getName());
+//				nextActivity.setTitle(activity.getString("activity_title"));
+//				nextActivity.setDescription(activity.getString("activity_description"));
+//				nextActivity.setCategory(activity.getString("activity_category"));
+//				nextActivity.setLat(activity.getString("activity_lat"));
+//				nextActivity.setLon(activity.getString("activity_lon"));
+//				nextActivity.setLocation(activity.getString("activity_location"));
+//				nextActivity.setParticipants(activity.getLong("activity_participants"));
+//				nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
+//				nextActivity.setDate(activity.getString("activity_date"));
+//				nextActivity.setActivityOwner(activity.getString("activity_owner"));
 				
-				activities.add(nextActivity);
+//				activities.add(nextActivity);
+				activities.add(newAct);
 			});
 			
 			
@@ -601,6 +633,193 @@ public class ActivityResource {
 		
 	}
 	
+	
+	
+	@POST
+	@Path("/listByOrg")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doListByOrg(AuthToken token) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+
+					.build();
+
+			
+			QueryResults<Entity> activitiesQuery = datastore.run(query);
+			
+			Query<Entity> queryU = Query.newEntityQueryBuilder()
+					.setKind("User")
+					.setFilter(
+							PropertyFilter.eq("is_org", true))
+					.build();
+			
+			QueryResults<Entity> usersQuery = datastore.run(queryU);
+			
+			List<String> users = new ArrayList<>();
+			
+			usersQuery.forEachRemaining(user->{	
+
+				String nextUser = user.getKey().getName();
+				
+				users.add(nextUser);
+				
+			});
+		
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			activitiesQuery.forEachRemaining(activity -> {
+				
+				for(String  u : users) {
+					if(u.contains(activity.getString("activity_owner"))) {
+//						ActivitiesData nextActivity = new ActivitiesData();
+//
+//						nextActivity.setID(activity.getKey().getName());
+//						nextActivity.setTitle(activity.getString("activity_title"));
+//						nextActivity.setDescription(activity.getString("activity_description"));
+//						nextActivity.setCategory(activity.getString("activity_category"));
+//						nextActivity.setLat(activity.getString("activity_lat"));
+//						nextActivity.setLon(activity.getString("activity_lon"));
+//						nextActivity.setLocation(activity.getString("activity_location"));
+//						nextActivity.setParticipants(activity.getLong("activity_participants"));
+//						nextActivity.setTotalParticipants(activity.getLong("activity_total_participants"));
+//						nextActivity.setDate(activity.getString("activity_date"));
+//						nextActivity.setActivityOwner(activity.getString("activity_owner"));
+//						
+//						activities.add(nextActivity);
+						
+						ActivitiesData newAct = createActivity(activity);
+						activities.add(newAct);
+					}
+				}
+				
+				
+			});
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+//			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
+	@POST
+	@Path("/listByUser")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doListByUser(AuthToken token) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+
+					.build();
+
+			
+			QueryResults<Entity> activitiesQuery = datastore.run(query);
+			
+			Query<Entity> queryU = Query.newEntityQueryBuilder()
+					.setKind("User")
+					.setFilter(
+							PropertyFilter.eq("is_org", false))
+					.build();
+			
+			QueryResults<Entity> usersQuery = datastore.run(queryU);
+			
+			List<String> users = new ArrayList<>();
+			
+			usersQuery.forEachRemaining(user->{	
+
+				String nextUser = user.getKey().getName();
+				
+				users.add(nextUser);
+				
+			});
+		
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			activitiesQuery.forEachRemaining(activity -> {
+				
+				for(String  u : users) {
+					if(u.contains(activity.getString("activity_owner"))) {
+						
+						ActivitiesData newAct = createActivity(activity);
+						activities.add(newAct);
+					}
+				}
+				
+				
+			});
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+//			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
 	
 	@POST
 	@Path("/get/{activityID}/{activityOwner}")
@@ -638,28 +857,29 @@ public class ActivityResource {
 				LOG.warning("No such activity");
 				return Response.status(Status.FORBIDDEN).build();
 			}
-			
-			ActivitiesData newActivity = new ActivitiesData();
-			
-			newActivity.setID(activityEntity.getKey().getName());
-			newActivity.setTitle(activityEntity.getString("activity_title"));
-			newActivity.setDescription(activityEntity.getString("activity_description"));
-			newActivity.setDate(activityEntity.getString("activity_date"));
-			newActivity.setLocation(activityEntity.getString("activity_location"));
-			newActivity.setParticipants(activityEntity.getLong("activity_participants"));
-			newActivity.setTotalParticipants(activityEntity.getLong("activity_total_participants"));
-			newActivity.setCategory(activityEntity.getString("activity_category"));
-			newActivity.setActivityOwner(activityOwner);
-			newActivity.setLat(activityEntity.getString("activity_lat"));
-			newActivity.setLon(activityEntity.getString("activity_lon"));
-			newActivity.setStartHour(activityEntity.getString("activity_startHour"));
-			newActivity.setEndHour(activityEntity.getString("activity_endHour"));
-			//newActivity.setParticipants(activityEntity.getList("activity_participants"));
-			newActivity.setKeywords(convertToList(activityEntity.getList("activity_keywords")));
+			ActivitiesData newAct = createActivity(activityEntity);
+//			activities.add(newAct);
+//			ActivitiesData newActivity = new ActivitiesData();
+//			
+//			newActivity.setID(activityEntity.getKey().getName());
+//			newActivity.setTitle(activityEntity.getString("activity_title"));
+//			newActivity.setDescription(activityEntity.getString("activity_description"));
+//			newActivity.setDate(activityEntity.getString("activity_date"));
+//			newActivity.setLocation(activityEntity.getString("activity_location"));
+//			newActivity.setParticipants(activityEntity.getLong("activity_participants"));
+//			newActivity.setTotalParticipants(activityEntity.getLong("activity_total_participants"));
+//			newActivity.setCategory(activityEntity.getString("activity_category"));
+//			newActivity.setActivityOwner(activityOwner);
+//			newActivity.setLat(activityEntity.getString("activity_lat"));
+//			newActivity.setLon(activityEntity.getString("activity_lon"));
+//			newActivity.setStartHour(activityEntity.getString("activity_startHour"));
+//			newActivity.setEndHour(activityEntity.getString("activity_endHour"));
+//			//newActivity.setParticipants(activityEntity.getList("activity_participants"));
+//			newActivity.setKeywords(convertToList(activityEntity.getList("activity_keywords")));
 			
 			
 			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(newActivity)).build();
+			return Response.status(Status.OK).entity(g.toJson(newAct)).build();
 			
 
 
@@ -676,6 +896,10 @@ public class ActivityResource {
 		}
 	}
 	
+	
+	
+	
+	//ALL DEPRECATED -------------------------------------------------------------------------------
 	
 	@Deprecated
 	@GET
@@ -759,6 +983,13 @@ public class ActivityResource {
 		
 		
 	}
+	
+	
+	
+	
+	
+	
+
 	
 	
 	

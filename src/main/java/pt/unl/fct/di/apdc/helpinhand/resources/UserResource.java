@@ -34,6 +34,7 @@ import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.StructuredQuery;
 import com.google.cloud.datastore.Transaction;
+import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 
@@ -1141,7 +1142,234 @@ public class UserResource{
 	
 	
 	
+	@POST
+	@Path("/get/followings")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetFollowings(AuthToken token) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			Query <Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Following")
+					.setFilter(
+							PropertyFilter.eq("follower", token.getUsername()))
+					.build();
+			
+			QueryResults<Entity> followingsQuery = datastore.run(query);
+			
+			
+			List<String> users = new ArrayList<>(); 
+			
+			followingsQuery.forEachRemaining(user->{
+				String nextUser;
+				nextUser = user.getKey().getName();
+				users.add(nextUser);
+			});
+				
+				
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(users)).build();	
+				
+				
+
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
 	
+	
+	
+	@POST
+	@Path("/isfollowing/{username}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doIsFollowing(AuthToken token, @PathParam("username") String username) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			Query <Entity> query = Query.newEntityQueryBuilder()
+					.setKind("Following")
+//					.setFilter(
+//							PropertyFilter.gt("__key__", factory.setKind("Following").newKey(username)))
+//							PropertyFilter.gt("__key__",factory.newKey(username)))
+//							CompositeFilter.and(
+//									PropertyFilter.hasAncestor(
+//											factory.setKind("User").addAncestors(PathElement.of("User", token.getUsername()), PathElement.of("User", username)).newKey(username)), 
+//							PropertyFilter.eq("follower", token.getUsername())
+//							))
+					.build();
+			
+			QueryResults<Entity> followingsQuery = datastore.run(query);
+			
+			
+			List<String> users = new ArrayList<>(); 
+			
+			
+			boolean isFollowing=false;
+			
+//			if(followingsQuery.hasNext())
+//				isFollowing=true;
+			
+			followingsQuery.forEachRemaining(user->{
+				String nextUser;
+				nextUser = user.getKey().getName();
+				users.add(nextUser);
+			});
+			
+			if(users.contains(username))
+				isFollowing=true;
+				
+				
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(isFollowing)).build();	
+				
+				
+
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
+	
+	
+	@POST
+	@Path("/unfollow/{username}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doUnfollow(AuthToken token, @PathParam("username") String username) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		try {
+			
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+		
+		if(tokenEntity == null) {
+			txn.rollback();
+			LOG.warning("Token Authentication Failed");
+			return Response.status(Status.FORBIDDEN).build();
+		}
+		
+		
+		Key followKey = factory
+				.addAncestors(PathElement.of("User", token.getUsername()),PathElement.of("User", username))
+				.setKind("Following")
+				.newKey(username);
+		
+		Entity followEntity = txn.get(followKey);
+		
+
+		
+
+		if(followEntity ==null) {
+			txn.rollback();
+			LOG.warning("This follow doesnt exists");
+			return Response.status(Status.BAD_REQUEST).entity("Follow doesnt exists.").build();
+		}
+
+		
+		Key selfUserKey = database.getUserKey(token.getUsername());
+		Key targetUserKey = database.getUserKey(username);
+		
+		Entity selfEntity = txn.get(selfUserKey);
+		Entity targetEntity = txn.get(targetUserKey);
+		
+		long followings = selfEntity.getLong("user_following")-1;
+		long followers = targetEntity.getLong("user_followers")-1; 
+		
+		Entity newSelf = Entity.newBuilder(selfEntity)
+				.set("user_following", followings)
+				.build();
+		
+		Entity newTarget = Entity.newBuilder(targetEntity)
+				.set("user_followers", followers)
+				.build();
+		
+		txn.update(newSelf, newTarget);
+		
+
+		LOG.warning("follow on user " + username + " deleted");
+
+//		followEntity = Entity.newBuilder(followKey)
+//				.set("follower", token.getUsername())
+////				.set("following", token.getUsername())
+//				.build();
+		
+		txn.delete(followKey);
+		
+		txn.commit();
+		return Response.ok(" {} ").build();
+
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+
+		
+	}
+	
+	
+	
+	//ALL DEPRECATED ----------------------------------------------------------------------------------------------------------------------------------
 	
 	@Deprecated
 	@PATCH
