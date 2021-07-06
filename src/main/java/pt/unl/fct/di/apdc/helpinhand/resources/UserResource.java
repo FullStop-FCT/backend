@@ -43,13 +43,10 @@ import com.google.gson.Gson;
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
 import pt.unl.fct.di.apdc.helpinhand.api.Request;
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
-import pt.unl.fct.di.apdc.helpinhand.api.UserOrg;
-//import pt.unl.fct.di.apdc.helpinhand.api.service.RestUsers;
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
 import pt.unl.fct.di.apdc.helpinhand.util.Profile;
 import pt.unl.fct.di.apdc.helpinhand.util.Roles;
 import pt.unl.fct.di.apdc.helpinhand.util.State;
-import pt.unl.fct.di.apdc.helpinhand.util.Kinds;
 import pt.unl.fct.di.apdc.helpinhand.util.Verification;
 
 

@@ -164,6 +164,7 @@ public class ActivityResource {
 				createdActivityEntity = Entity.newBuilder(createdKey)
 						.set("created_by", request.getToken().getUsername())
 						.set("activity_title", request.getActivityData().getTitle())
+						.set("activity_ID", act.getID()) //just added
 						.build();
 				
 				txn.add(activityEntity, createdActivityEntity);
@@ -354,6 +355,7 @@ public class ActivityResource {
 			joinedEntity = Entity.newBuilder(joinKey)
 					.set("activity_ID", activityID)
 					.set("activity_title", activityEntity.getString("activity_title"))
+					.set("user", token.getUsername()) //just added
 //					.set("user_username", token.getUsername())
 					.build();
 			
@@ -897,6 +899,140 @@ public class ActivityResource {
 	}
 	
 	
+	
+	@POST
+	@Path("/listCreatedActivities")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetCreatedActivities(AuthToken token) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("CreatedActivityBy")
+					.setFilter(
+							PropertyFilter.eq("created_by", token.getUsername()))
+					.build();
+
+			
+			QueryResults<Entity> createdQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdQuery.forEachRemaining(activity -> {
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				
+				activities.add(newAct);
+			});
+			
+			
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
+	
+	
+	
+	
+	
+	@POST
+	@Path("/listJoinedActivities")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetJoinedActivities(AuthToken token) {
+		Transaction txn = datastore.newTransaction();
+		
+		Key tokenKey = database.getTokenKey(token);
+		
+		Entity tokenEntity = txn.get(tokenKey);
+		
+		
+		try {
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(tokenEntity == null) {
+				txn.rollback();
+				LOG.warning("Token Authentication Failed");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							PropertyFilter.eq("user", token.getUsername()))
+					.build();
+
+			
+			QueryResults<Entity> createdQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdQuery.forEachRemaining(activity -> {
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				
+				activities.add(newAct);
+			});
+			
+			
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
 	
 	
 	//ALL DEPRECATED -------------------------------------------------------------------------------
