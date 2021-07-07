@@ -1095,6 +1095,7 @@ public class UserResource{
 						.setFilter(
 								StructuredQuery.PropertyFilter.eq("is_org", true))
 //						.setOrderBy(OrderBy.desc("user_hours"))
+						.setOrderBy(OrderBy.desc("created_activities"))
 						.setLimit(25)
 						.build();
 				
@@ -1113,7 +1114,7 @@ public class UserResource{
 					nextUser.setMobileNumber(user.getString("user_mobile_number"));
 					nextUser.setLocation(user.getString("user_location"));
 					nextUser.setFollowings(user.getLong("user_following"));
-					
+					nextUser.setCreatedActivities(user.getLong("created_activities"));
 					nextUser.setImage(user.getString("user_image"));
 					nextUser.setOrg(user.getBoolean("is_org"));
 					

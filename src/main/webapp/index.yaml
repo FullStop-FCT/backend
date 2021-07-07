@@ -5,3 +5,10 @@ indexes:
   properties:
   - name: activity_title
     direction: desc
+    
+- kind: User
+  properties: 
+   - name: is_org
+   - name: created_activities
+     direction: desc
+    
