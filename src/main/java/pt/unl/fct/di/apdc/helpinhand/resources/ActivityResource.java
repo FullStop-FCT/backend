@@ -336,6 +336,7 @@ public class ActivityResource {
 			if(joinedEntity != null) {
 				txn.rollback();
 				LOG.warning("This user already joined this activity");
+//				return Response.ok(" {} ").build();
 				return Response.status(Status.BAD_REQUEST).entity("This user already joined this activity.").build();
 			}
 			
@@ -352,7 +353,8 @@ public class ActivityResource {
 			if(participants>total) {
 				txn.rollback();
 				LOG.warning("This activity is full :(");
-				return Response.status(Status.BAD_REQUEST).entity("Activity is full :(").build();
+				return Response.ok(" Activity is full :( ").build();
+//				return Response.status(Status.BAD_REQUEST).entity("Activity is full :(").build();
 			}
 			activityEntity = Entity.newBuilder(datastore.get(activityKey))
 					.set("activity_participants", participants)
@@ -1046,7 +1048,7 @@ public class ActivityResource {
 //			newActivity.setCategory(activityEntity.getString("activity_category"));
 //			newActivity.setActivityOwner(activityOwner);
 //			newActivity.setLat(activityEntity.getString("activity_lat"));
-//			newActivity.setLon(activityEntity.getString("activity_lon"));
+//			newActivity.setLon(activityEntity.getString("activ	ity_lon"));
 //			newActivity.setStartHour(activityEntity.getString("activity_startHour"));
 //			newActivity.setEndHour(activityEntity.getString("activity_endHour"));
 //			//newActivity.setParticipants(activityEntity.getList("activity_participants"));

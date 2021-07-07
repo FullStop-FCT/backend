@@ -924,6 +924,8 @@ public class UserResource{
 //			return Response.status(Status.FORBIDDEN).build();
 //		}
 		
+			
+			
 		if(tokenEntity == null) {
 			txn.rollback();
 			LOG.warning("Token Authentication Failed");
@@ -932,7 +934,7 @@ public class UserResource{
 		
 		
 		Key followKey = factory
-				.addAncestors(PathElement.of("User", token.getUsername()),PathElement.of("User", username))
+				.addAncestor(PathElement.of("User", token.getUsername()))
 				.setKind("Following")
 				.newKey(username);
 		
@@ -972,7 +974,7 @@ public class UserResource{
 
 		followEntity = Entity.newBuilder(followKey)
 				.set("follower", token.getUsername())
-//				.set("following", token.getUsername())
+				.set("following", username)
 				.build();
 		
 
@@ -1301,7 +1303,7 @@ public class UserResource{
 		
 		
 		Key followKey = factory
-				.addAncestors(PathElement.of("User", token.getUsername()),PathElement.of("User", username))
+//				.addAncestors(PathElement.of("User", token.getUsername()),PathElement.of("User", username))
 				.setKind("Following")
 				.newKey(username);
 		
