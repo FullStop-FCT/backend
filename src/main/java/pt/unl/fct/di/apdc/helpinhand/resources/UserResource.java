@@ -1304,7 +1304,7 @@ public class UserResource{
 		
 		
 		Key followKey = factory
-//				.addAncestors(PathElement.of("User", token.getUsername()),PathElement.of("User", username))
+				.addAncestors(PathElement.of("User", token.getUsername()))
 				.setKind("Following")
 				.newKey(username);
 		
