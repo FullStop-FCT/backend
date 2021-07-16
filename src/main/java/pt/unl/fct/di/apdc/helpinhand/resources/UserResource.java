@@ -20,7 +20,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.appengine.repackaged.org.apache.commons.codec.digest.DigestUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Datastore;
@@ -908,6 +909,128 @@ public class UserResource{
 		
 	}
 	
+	
+	private String getUsername(HttpHeaders header) {
+		
+		String authHeaderVal = header.getHeaderString("Authorization");
+		DecodedJWT jwtDecoded = JWT.decode(authHeaderVal.split(" ")[1]);
+		String username = jwtDecoded.getIssuer();
+		return username;
+	}
+	
+	@Authorize
+	@GET
+	@Path("/userJWT")
+//	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUserJWT(@Context HttpHeaders header) {
+		
+//		String authHeaderVal;
+//		authHeaderVal = header.getHeaderString("Authorization");
+//
+//		String username;
+//		DecodedJWT jwtDecoded = JWT.decode(authHeaderVal.split(" ")[1]);
+//		username = jwtDecoded.getIssuer();
+		
+		String username = getUsername(header);
+		
+		Transaction txn = datastore.newTransaction();
+		
+//		Key tokenKey = database.getTokenKey(token);
+		
+//		Entity tokenEntity = txn.get(tokenKey);
+		
+		Key userKey = database.getUserKey(username);	
+		
+		
+		try {
+				
+			Entity userEntity = txn.get(userKey);
+			
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			UsersData newUser = new UsersData();
+			
+//			newUser.setUsername(userEntity.getKey().getName());
+//			newUser.setName(userEntity.getString("user_name"));
+//			newUser.setEmail(userEntity.getString("user_email"));
+//			newUser.setProfile(userEntity.getString("user_profile"));
+//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//			newUser.setLocation(userEntity.getString("user_location"));
+//			newUser.setBirthday(userEntity.getString("user_birthday"));
+//			newUser.setGender(userEntity.getString("user_gender"));
+//			newUser.setImage(userEntity.getString("user_image"));
+//			newUser.setImage(userEntity.getString("user_hours"));
+//			newUser.setJoinedActivities(userEntity.getList("user_activities"));
+//			newUser.setCreatedActivities(userEntity.getList("created_activities"));
+//			newUser.setFollowings(userEntity.getList("user_following"));
+
+			newUser.setUsername(userEntity.getKey().getName());
+			newUser.setName(userEntity.getString("user_name"));
+			newUser.setEmail(userEntity.getString("user_email"));
+			newUser.setProfile(userEntity.getString("user_profile"));
+			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+			newUser.setLocation(userEntity.getString("user_location"));
+			newUser.setFollowings(userEntity.getLong("user_following"));
+			
+			newUser.setImage(userEntity.getString("user_image"));
+			newUser.setOrg(userEntity.getBoolean("is_org"));
+			newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+			
+
+			if(userEntity.contains("user_joined_activities") )
+				newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
+//			if(userEntity.contains("created_activities"))
+//				
+//			if(userEntity.contains("user_following"))
+//			
+			if(userEntity.contains("org_followers"))
+				newUser.setFollowers(userEntity.getLong("org_followers"));
+			if(userEntity.contains("user_birthday"))
+				newUser.setBirthday(userEntity.getString("user_birthday"));
+			if(userEntity.contains("user_gender"))
+				newUser.setGender(userEntity.getString("user_gender"));
+			
+
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
 	
 	
 	

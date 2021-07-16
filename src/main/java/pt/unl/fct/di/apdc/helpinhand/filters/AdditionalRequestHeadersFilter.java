@@ -27,24 +27,31 @@ public class AdditionalRequestHeadersFilter implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 		// TODO Auto-generated method stub
-		LOG.warning("we're in request headers filter now");
+//		LOG.warning("we're in request headers filter now");
+		
+		
+		requestContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With, Authorization");
+		requestContext.getHeaders().add("Access-Control-Allow-Origin", "*");
+		requestContext.getHeaders().add("Access-Control-Allow-Methods", "HEAD,GET,PUT,POST,DELETE,OPTIONS,PATCH");
+		
 		String authHeaderVal = requestContext.getHeaderString("Authorization");
 		
+
 		
-		LOG.warning("are we inside here");
+//		LOG.warning("are we inside here");
 		
 		
         //consume JWT i.e. execute signature validation
         if(authHeaderVal.startsWith("Bearer")){
         	try {
-        		LOG.warning("val:"+ authHeaderVal);
+//        		LOG.warning("val:"+ authHeaderVal);
         		String token = authHeaderVal;
         		DecodedJWT jwtDecoded = JWT.decode(token.split(" ")[1]);
-        		LOG.warning("decoded: "+ jwtDecoded.toString());
+//        		LOG.warning("decoded: "+ jwtDecoded.toString());
         		// validate(authHeaderVal.split(" ")[1]);
         		
         		String issuer = jwtDecoded.getIssuer();
-        		LOG.warning("user: " + issuer);
+//        		LOG.warning("user: " + issuer);
         		
         		Algorithm algorithm = Algorithm.HMAC512("secret");
         		JWTVerifier verifier = JWT.require(algorithm)
@@ -52,7 +59,7 @@ public class AdditionalRequestHeadersFilter implements ContainerRequestFilter {
         				.build();
         		DecodedJWT jwt = verifier.verify(token.split(" ")[1]);
         		
-        		System.out.println("yeap we got here finally");
+//        		System.out.println("yeap we got here finally");
         	} catch (Exception ex) {
         		LOG.warning(ex.getMessage());
         		requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
