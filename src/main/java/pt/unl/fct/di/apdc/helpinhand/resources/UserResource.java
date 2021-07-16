@@ -14,6 +14,8 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -41,7 +43,9 @@ import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
+import pt.unl.fct.di.apdc.helpinhand.api.Authorize;
 import pt.unl.fct.di.apdc.helpinhand.api.Request;
+import pt.unl.fct.di.apdc.helpinhand.api.Secured;
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
 import pt.unl.fct.di.apdc.helpinhand.util.Profile;
@@ -574,6 +578,115 @@ public class UserResource{
 		}
 		LOG.warning("Failed update attempt for username: " + request.getToken().getUsername());
 		return Response.status(Status.BAD_REQUEST).entity("ups").build();
+	}
+	
+	
+	@GET
+	@Path("/getJWT/{username}")
+	@Authorize
+//	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUserJWT (@PathParam("username") String username) {
+		
+		 
+		Transaction txn = datastore.newTransaction();
+		
+//		Key tokenKey = database.getTokenKey(token);
+		
+//		Entity tokenEntity = txn.get(tokenKey);
+		
+		Key userKey = database.getUserKey(username);
+
+//		Key userKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("Parent", username))
+//				.setKind("Supporter")
+//				.newKey(username);
+
+		
+		try {
+			Entity userEntity = txn.get(userKey);
+			
+//			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+				UsersData newUser = new UsersData();
+				
+				newUser.setUsername(userEntity.getKey().getName());
+				newUser.setName(userEntity.getString("user_name"));
+				newUser.setImage(userEntity.getString("user_image"));
+				
+				txn.commit();
+				return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+			}
+
+			
+				UsersData newUser = new UsersData();
+				//List<com.google.cloud.datastore.Value<?>> list = userEntity.contains("user_activities") ? userEntity.getList("user_activities") : new List;
+				
+
+				
+				newUser.setUsername(userEntity.getKey().getName());
+				newUser.setName(userEntity.getString("user_name"));
+				newUser.setEmail(userEntity.getString("user_email"));
+				newUser.setProfile(userEntity.getString("user_profile"));
+				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+				newUser.setLocation(userEntity.getString("user_location"));
+				newUser.setFollowings(userEntity.getLong("user_following"));
+				
+				newUser.setImage(userEntity.getString("user_image"));
+				newUser.setOrg(userEntity.getBoolean("is_org"));
+				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+				
+
+				if(userEntity.contains("user_joined_activities") )
+					newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
+			
+				if(userEntity.contains("org_followers"))
+					newUser.setFollowers(userEntity.getLong("org_followers"));
+				if(userEntity.contains("user_birthday"))
+					newUser.setBirthday(userEntity.getString("user_birthday"));
+				if(userEntity.contains("user_gender"))
+					newUser.setGender(userEntity.getString("user_gender"));
+ 
+
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
 	}
 	
 	
@@ -1228,11 +1341,14 @@ public class UserResource{
 			
 			Query <Entity> query = Query.newEntityQueryBuilder()
 					.setKind("Following")
-//					.setFilter(
+					.setFilter(
 //							PropertyFilter.gt("__key__", factory.setKind("Following").newKey(username)))
 //							PropertyFilter.gt("__key__",factory.newKey(username)))
-//							CompositeFilter.and(
-//									PropertyFilter.hasAncestor(
+							CompositeFilter.and(
+									PropertyFilter.hasAncestor(factory.setKind("User").newKey(token.getUsername())),
+									PropertyFilter.eq("following", username)
+									)
+							)
 //											factory.setKind("User").addAncestors(PathElement.of("User", token.getUsername()), PathElement.of("User", username)).newKey(username)), 
 //							PropertyFilter.eq("follower", token.getUsername())
 //							))
@@ -1249,15 +1365,18 @@ public class UserResource{
 //			if(followingsQuery.hasNext())
 //				isFollowing=true;
 			
-			followingsQuery.forEachRemaining(user->{
-				String nextUser;
-				nextUser = user.getKey().getName();
-				users.add(nextUser);
-			});
+//			followingsQuery.forEachRemaining(user->{
+//				String nextUser;
+//				nextUser = user.getKey().getName();
+//				users.add(nextUser);
+//			});
+//			
+//			if(users.contains(username))
+//				isFollowing=true;
+//				
 			
-			if(users.contains(username))
+			if(followingsQuery.hasNext())
 				isFollowing=true;
-				
 				
 			txn.commit();
 			return Response.status(Status.OK).entity(g.toJson(isFollowing)).build();	
@@ -1365,6 +1484,20 @@ public class UserResource{
 		}
 
 		
+	}
+	
+	 
+	
+	//need autentication
+	@Authorize
+	@POST
+	@Path("/test")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	//@Secured({Roles.GBO})
+	public Response doTest() {
+		
+		return Response.ok("{}").build();
 	}
 	
 	

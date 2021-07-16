@@ -1,8 +1,12 @@
 package pt.unl.fct.di.apdc.helpinhand.resources;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +23,9 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
@@ -48,9 +55,133 @@ public class AuthenticationResource {
 	
 	private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 	
+	public static final long EXPIRATION_TIME = 1000*60;
+	
 	public AuthenticationResource() {
 		
 	}
+	
+	
+	
+	@POST
+	@Path("/loginJWT")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doLoginJWT(Request request) {
+		
+		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
+		
+		Key userKey = datastore.newKeyFactory()
+				.setKind("User")
+				.newKey(request.getUsername());
+		
+		
+			
+			
+			Transaction txn = datastore.newTransaction();
+			
+			try {
+				Entity user = txn.get(userKey);
+				
+				if(user == null) {
+					LOG.warning("Failed login attempt");
+					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+				}
+				
+				if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED")) {
+					LOG.warning("Failed login attempt");
+					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+				}
+				
+				String hashedPWD = user.getString("user_pwd");
+				if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
+		
+//					String token = issueToken(request.getUsername(), 1);
+					
+//					AuthToken token = new AuthToken(request.getUsername(),user.getString("user_role"));
+					
+					
+					Key tokenKey = datastore.allocateId(
+							datastore.newKeyFactory()
+								.addAncestor(PathElement.of("User", request.getUsername()))
+								.setKind("JWTToken")
+								.newKey()
+							);
+					
+//					String encoded = Base64.getEncoder().encodeToString(token.getTokenID().getBytes());
+					
+					Date now = new Date(System.currentTimeMillis());
+//					Date late = newDate(Timestamp.now() + TimeUnit.HOURS.toMillis(1));
+					Date later = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+
+					
+					Algorithm algorithm = Algorithm.HMAC512("secret");
+					String jwtToken = JWT.create()
+							.withClaim("role", user.getString("user_role"))
+							.withClaim("image", user.getString("user_image"))
+							.withIssuedAt(now)
+							.withExpiresAt(later)
+//							.withIssuedAt(Timestamp.now().toDate())
+//							.withExpiresAt(token.getExpirationData().toDate())
+							.withIssuer(request.getUsername())
+							.sign(algorithm);
+					
+					Entity tokenEntity = Entity.newBuilder(tokenKey)
+							.set("issuer", request.getUsername())
+							.set("role", user.getString("user_role"))
+							.set("image", user.getString("user_image"))
+							.set("creationData",now.toString() )
+							.set("expirationData", later.toString())
+							.set("secret","secret")
+							.build();
+					
+					txn.put(tokenEntity);
+					txn.commit();
+					
+					return Response.ok(jwtToken).build();
+				
+				
+				}
+				else {
+					txn.rollback();
+					LOG.warning("Wrong password for username: " + request.getUsername());
+					return Response.status(Status.FORBIDDEN).entity("Wrong password or username").build();
+				}
+			}catch(Exception e) {
+				txn.rollback();
+				LOG.warning("exception "+ e.toString());
+				return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+			}finally {
+				if(txn.isActive()) {
+					txn.rollback();
+					LOG.warning("entered finally");
+					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+				}
+			}
+			
+	
+		
+	}
+	
+	
+//	private String issueToken(String login, int expiration, AuthToken token) {
+//		
+//		try {
+//			Algorithm algorithm = Algorithm.HMAC512(token.getTokenID());
+//			
+//			String jwtToken = JWT.create()
+//					.withClaim("role", token.getRole())
+////					.withIssuedAt(Timestamp.now().toDate())
+////					.withExpiresAt(token.getExpirationData().toDate())
+//					.withIssuer(login)
+//					.sign(algorithm);
+//		}catch(JWTCreationException exception) {
+//			
+//		}
+//
+//		
+//	}
+	
 	
 	@POST
 	@Path("/login")

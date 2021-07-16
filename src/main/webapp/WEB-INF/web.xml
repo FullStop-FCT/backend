@@ -40,12 +40,21 @@
 
 		<init-param>
 			<param-name>jersey.config.server.provider.classnames</param-name>
-			<param-value>pt.unl.fct.di.apdc.helpinhand.filters.AdditionalResponseHeadersFilter</param-value>
+			<param-value>pt.unl.fct.di.apdc.helpinhand.filters.AdditionalResponseHeadersFilter, pt.unl.fct.di.apdc.helpinhand.filters.AdditionalRequestHeadersFilter</param-value>	
 		</init-param>
+	
+	<!--	<init-param>
+			<param-name>jersey.config.server.provider.classnames</param-name>
+			<param-value>pt.unl.fct.di.apdc.helpinhand.filters.AdditionalRequestHeadersFilter</param-value>
+		</init-param> -->
 		<init-param>
 			<param-name>jersey.config.servlet.filter.contextPath</param-name>
 			<param-value>/rest/*</param-value>
 		</init-param>
+		
+
+				
+
 
 
 		<init-param>
@@ -86,9 +95,29 @@
     	<filter-name>CORSFilter</filter-name>
     	<url-pattern>/*</url-pattern>
 	</filter-mapping>
-    
-    
-	
-	
+
+	    	
+
+    <!-- 
+	<security-constraint>
+			<display-name>Basic Auth Constraint</display-name>
+			<web-resource-collection>
+				<web-resource-name>all</web-resource-name>
+				<description/>
+				<url-pattern>/*</url-pattern>
+			</web-resource-collection>
+			<auth-constraint>
+				<description/>
+				<role-name>*</role-name>
+			</auth-constraint>
+	</security-constraint>
+	<login-config>
+		<auth-method>BASIC</auth-method>
+		<realm-name>file</realm-name>
+	</login-config>
+	<security-role>
+		<description/>
+		<role-name>USER</role-name>
+	</security-role>- -->
 	
 </web-app>
