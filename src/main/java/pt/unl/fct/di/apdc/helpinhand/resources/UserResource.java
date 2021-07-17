@@ -464,40 +464,172 @@ public class UserResource{
 //	}
 	
 	
+//	@PATCH
+////	@POST
+//	@Path("/update")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response doUpdate(Request request) {
+//		// TODO Auto-generated method stub
+//		LOG.warning("Attempt to update user: "+ request.getToken().getUsername());
+//		
+//		Transaction txn = datastore.newTransaction();
+//		Key userKey = datastore.newKeyFactory()
+//				.setKind("User")
+//				.newKey(request.getToken().getUsername());
+//		Key tokenKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("User", request.getToken().getUsername()))
+//				.setKind("Token")
+//				.newKey(request.getToken().getTokenID());
+//		try {
+//			 
+//			Entity userEntity = txn.get(userKey);
+//			Entity tokenEntity = txn.get(tokenKey);
+//			
+////			if(tokenEntity == null || System.currentTimeMillis() > request.getToken().getExpirationData()) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(userEntity.getString("user_role").equals(Roles.USER.toString()) && (!userEntity.getString("user_state").equals(State.DELETED.toString()) 
+//					|| !userEntity.getString("user_state").equals(State.DISABLED.toString())) ) {
+//				
+////				String email= request.getUserData().validateEmail() ? request.getUserData().getEmail() : userEntity.getString("user_email");
+//	
+////				String email= verifier.validateEmail(request.getUserData().getEmail()) ? request.getUserData().getEmail() : userEntity.getString("user_email");
+//				
+////				String password = data.getUserData().validatePassword() ? data.getUserData().getPassword() : userEntity.getString("user_password");
+//				
+////				String password = data.getUserData().validatePassword() ? DigestUtils.sha512Hex(data.getUserData().getPassword()) : userEntity.getString("user_pwd");
+//				
+//				String profile = request.getUserData().getProfile()!=null && !request.getUserData().getProfile().isEmpty() 
+//						? request.getUserData().getProfile() : userEntity.getString("user_profile");
+//				
+//				String phoneNumber = request.getUserData().getPhoneNumber() != null && !request.getUserData().getPhoneNumber().isEmpty()
+//						? request.getUserData().getPhoneNumber() : userEntity.getString("user_phone_number");
+//				
+//				String mobileNumber = request.getUserData().getMobileNumber() != null && !request.getUserData().getMobileNumber().isEmpty()
+//						? request.getUserData().getMobileNumber() : userEntity.getString("user_mobile_number");
+//				
+////				String address = request.getUserData().getAddress() != null && !request.getUserData().getAddress().isEmpty()
+////						? request.getUserData().getAddress() : userEntity.getString("user_address");
+//				
+////				String extraAddress = request.getUserData().getExtraAddress() != null && !request.getUserData().getExtraAddress().isEmpty()
+////						? request.getUserData().getExtraAddress() : userEntity.getString("user_extra_address");
+//				
+//				String location = request.getUserData().getLocation() != null &&  !request.getUserData().getLocation().isEmpty()
+//						? request.getUserData().getLocation() : userEntity.getString("user_location");
+//				
+////				String postalCode = request.getUserData().getPostalCode() !=null && !request.getUserData().getPostalCode().isEmpty()
+////						? request.getUserData().getPostalCode() : userEntity.getString("user_postalCode");
+//				
+//				String birthday = request.getUserData().getBirthday() !=null && !request.getUserData().getBirthday().isEmpty()
+//						? request.getUserData().getBirthday() : userEntity.getString("user_birthday");
+//				
+//				String gender = request.getUserData().getGender() !=null && !request.getUserData().getGender().isEmpty()
+//						? request.getUserData().getGender() : userEntity.getString("user_gender");
+//				
+//				
+//				String image = request.getUserData().getImage() !=null && !request.getUserData().getImage().isEmpty()
+//						? request.getUserData().getImage() : userEntity.getString("user_image");
+//				
+//				userEntity = Entity.newBuilder(datastore.get(userKey))
+////						.set("user_email", email)
+////						.set("user_pwd", userEntity.getString("user_pwd"))
+////						.set("user_pwd", password)
+//						.set("user_profile", profile)
+//						.set("user_phone_number", phoneNumber)
+//						.set("user_mobile_number", mobileNumber)
+////						.set("user_address", address)
+////						.set("user_extra_address", extraAddress)
+//						.set("user_location", location)
+////						.set("user_postal_code", postalCode)
+//						.set("user_birthday", birthday)
+//						.set("user_gender", gender)
+//						.set("user_image", image)
+//						.set("last_time_modified", Timestamp.now())
+////						.set("user_role", userEntity.getString("user_role"))
+////						.set("user_state", userEntity.getString("user_state"))
+////						.set("user_creation_time", userEntity.getTimestamp("user_creation_time"))
+//						.build();
+//										
+//				txn.update(userEntity);
+//				LOG.warning("Self User updated: " + request.getToken().getUsername());
+//				txn.commit();
+//				return Response.ok(" {} ").build(); 
+//				}
+//			
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//		LOG.warning("Failed update attempt for username: " + request.getToken().getUsername());
+//		return Response.status(Status.BAD_REQUEST).entity("ups").build();
+//	}
+	
+	@Authorize
 	@PATCH
 //	@POST
 	@Path("/update")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response doUpdate(Request request) {
+	public Response doUpdate(@Context HttpHeaders header, Request request) {
 		// TODO Auto-generated method stub
-		LOG.warning("Attempt to update user: "+ request.getToken().getUsername());
+		
+		String username = getUsername(header);
+		
+		LOG.warning("Attempt to update user: "+ username);
+		
+		
+		
 		
 		Transaction txn = datastore.newTransaction();
+	
 		Key userKey = datastore.newKeyFactory()
 				.setKind("User")
-				.newKey(request.getToken().getUsername());
-		Key tokenKey = datastore.newKeyFactory()
-				.addAncestor(PathElement.of("User", request.getToken().getUsername()))
-				.setKind("Token")
-				.newKey(request.getToken().getTokenID());
+				.newKey(username);
+		
+//		Key tokenKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("User", request.getToken().getUsername()))
+//				.setKind("Token")
+//				.newKey(request.getToken().getTokenID());
 		try {
-			 
+			
+			
 			Entity userEntity = txn.get(userKey);
-			Entity tokenEntity = txn.get(tokenKey);
+			
+//			Entity tokenEntity = txn.get(tokenKey);
 			
 //			if(tokenEntity == null || System.currentTimeMillis() > request.getToken().getExpirationData()) {
 //				txn.rollback();
 //				LOG.warning("Token Authentication Failed");
 //				return Response.status(Status.FORBIDDEN).build();
 //			}
-			if(tokenEntity == null) {
-				txn.rollback();
-				LOG.warning("Token Authentication Failed");
-				return Response.status(Status.FORBIDDEN).build();
-			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+			
 			
 			if(userEntity.getString("user_role").equals(Roles.USER.toString()) && (!userEntity.getString("user_state").equals(State.DELETED.toString()) 
 					|| !userEntity.getString("user_state").equals(State.DISABLED.toString())) ) {
+			
+				
 				
 //				String email= request.getUserData().validateEmail() ? request.getUserData().getEmail() : userEntity.getString("user_email");
 	
@@ -538,6 +670,8 @@ public class UserResource{
 				String image = request.getUserData().getImage() !=null && !request.getUserData().getImage().isEmpty()
 						? request.getUserData().getImage() : userEntity.getString("user_image");
 				
+//				LOG.warning("behind builder " + request.getUserData().getPhoneNumber());
+				
 				userEntity = Entity.newBuilder(datastore.get(userKey))
 //						.set("user_email", email)
 //						.set("user_pwd", userEntity.getString("user_pwd"))
@@ -559,7 +693,7 @@ public class UserResource{
 						.build();
 										
 				txn.update(userEntity);
-				LOG.warning("Self User updated: " + request.getToken().getUsername());
+				LOG.warning("Self User updated: " + username);
 				txn.commit();
 				return Response.ok(" {} ").build(); 
 				}
@@ -580,6 +714,7 @@ public class UserResource{
 		LOG.warning("Failed update attempt for username: " + request.getToken().getUsername());
 		return Response.status(Status.BAD_REQUEST).entity("ups").build();
 	}
+	
 	
 	
 	@GET
@@ -690,19 +825,131 @@ public class UserResource{
 		
 	}
 	
+
+//	@Authorize
+//	//@POST
+//	@GET
+//	@Path("/get/{username}")
+//	//@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetUser(AuthToken token, @PathParam("username") String username) {
+//		
+//		 
+//		Transaction txn = datastore.newTransaction();
+//		
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
+//		
+//		Key userKey = database.getUserKey(username);
+//
+////		Key userKey = datastore.newKeyFactory()
+////				.addAncestor(PathElement.of("Parent", username))
+////				.setKind("Supporter")
+////				.newKey(username);
+//
+//		
+//		try {
+//			Entity userEntity = txn.get(userKey);
+//			
+////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(userEntity == null) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+//				UsersData newUser = new UsersData();
+//				
+//				newUser.setUsername(userEntity.getKey().getName());
+//				newUser.setName(userEntity.getString("user_name"));
+//				newUser.setImage(userEntity.getString("user_image"));
+//				
+//				txn.commit();
+//				return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+//			}
+//
+//			
+//				UsersData newUser = new UsersData();
+//				//List<com.google.cloud.datastore.Value<?>> list = userEntity.contains("user_activities") ? userEntity.getList("user_activities") : new List;
+//				
+//
+//				
+//				newUser.setUsername(userEntity.getKey().getName());
+//				newUser.setName(userEntity.getString("user_name"));
+//				newUser.setEmail(userEntity.getString("user_email"));
+//				newUser.setProfile(userEntity.getString("user_profile"));
+//				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//				newUser.setLocation(userEntity.getString("user_location"));
+//				newUser.setFollowings(userEntity.getLong("user_following"));
+//				
+//				newUser.setImage(userEntity.getString("user_image"));
+//				newUser.setOrg(userEntity.getBoolean("is_org"));
+//				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+//				
+//
+//				if(userEntity.contains("user_joined_activities") )
+//					newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
+//			
+//				if(userEntity.contains("org_followers"))
+//					newUser.setFollowers(userEntity.getLong("org_followers"));
+//				if(userEntity.contains("user_birthday"))
+//					newUser.setBirthday(userEntity.getString("user_birthday"));
+//				if(userEntity.contains("user_gender"))
+//					newUser.setGender(userEntity.getString("user_gender"));
+// 
+//
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//		
+//	}
 	
-	@POST
+	@Authorize
+	//@POST
+	@GET
 	@Path("/get/{username}")
-	@Consumes(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetUser(AuthToken token, @PathParam("username") String username) {
+	public Response doGetUser(@PathParam("username") String username) {
 		
+//		String user = getUsername(header);
 		 
 		Transaction txn = datastore.newTransaction();
 		
-		Key tokenKey = database.getTokenKey(token);
+//		Key tokenKey = database.getTokenKey(token);
 		
-		Entity tokenEntity = txn.get(tokenKey);
+//		Entity tokenEntity = txn.get(tokenKey);
 		
 		Key userKey = database.getUserKey(username);
 
@@ -720,12 +967,12 @@ public class UserResource{
 //				LOG.warning("Token Authentication Failed");
 //				return Response.status(Status.FORBIDDEN).build();
 //			}
-			if(tokenEntity == null) {
-				txn.rollback();
-				LOG.warning("Token Authentication Failed");
-				return Response.status(Status.FORBIDDEN).build();
-			}
-			
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
 			if(userEntity == null) {
 				txn.rollback();
 				LOG.warning("No such user");
@@ -799,11 +1046,125 @@ public class UserResource{
 	}
 	
 	
+	
+	
+//	@GET
+//	@Path("/self/{username}")
+////	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetSelfUser(@PathParam("username") String username) {
+//		
+//		 
+//		Transaction txn = datastore.newTransaction();
+//		
+////		Key tokenKey = database.getTokenKey(token);
+//		
+////		Entity tokenEntity = txn.get(tokenKey);
+//		
+//		Key userKey = database.getUserKey(username);
+//
+////		Key userKey = datastore.newKeyFactory()
+////				.addAncestor(PathElement.of("Parent", username))
+////				.setKind("Supporter")
+////				.newKey(username);
+//
+//		
+//		try {
+//			Entity userEntity = txn.get(userKey);
+//			
+////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+////			if(tokenEntity == null) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+////			
+//			if(userEntity == null) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+//				UsersData newUser = new UsersData();
+//				
+//				newUser.setUsername(userEntity.getKey().getName());
+//				newUser.setName(userEntity.getString("user_name"));
+//				newUser.setImage(userEntity.getString("user_image"));
+//				
+//				txn.commit();
+//				return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+//			}
+//
+//			
+//				UsersData newUser = new UsersData();
+//				//List<com.google.cloud.datastore.Value<?>> list = userEntity.contains("user_activities") ? userEntity.getList("user_activities") : new List;
+//				
+//
+//				
+//				newUser.setUsername(userEntity.getKey().getName());
+//				newUser.setName(userEntity.getString("user_name"));
+//				newUser.setEmail(userEntity.getString("user_email"));
+//				newUser.setProfile(userEntity.getString("user_profile"));
+//				newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//				newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//				newUser.setLocation(userEntity.getString("user_location"));
+//				newUser.setFollowings(userEntity.getLong("user_following"));
+//				
+//				newUser.setImage(userEntity.getString("user_image"));
+//				newUser.setOrg(userEntity.getBoolean("is_org"));
+//				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+//				
+//
+//				if(userEntity.contains("user_joined_activities") )
+//					newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
+////				if(userEntity.contains("created_activities"))
+////					
+////				if(userEntity.contains("user_following"))
+////				
+//				if(userEntity.contains("org_followers"))
+//					newUser.setFollowers(userEntity.getLong("org_followers"));
+//				if(userEntity.contains("user_birthday"))
+//					newUser.setBirthday(userEntity.getString("user_birthday"));
+//				if(userEntity.contains("user_gender"))
+//					newUser.setGender(userEntity.getString("user_gender"));
+// 
+//
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//		
+//	}
+	
+	
+	@Authorize
 	@GET
 	@Path("/self/{username}")
 //	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetUser(@PathParam("username") String username) {
+	public Response doGetSelfUser(@PathParam("username") String username) {
 		
 		 
 		Transaction txn = datastore.newTransaction();
@@ -1035,20 +1396,127 @@ public class UserResource{
 	
 	
 	
-	@POST
+//	@POST
+//	@Path("/user")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetUserNoLogin(AuthToken token) {
+//		
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
+//		
+//		Key userKey = database.getUserKey(token.getUsername());	
+//		
+//		
+//		try {
+//				
+//			Entity userEntity = txn.get(userKey);
+//			
+////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////			txn.rollback();
+////			LOG.warning("Token Authentication Failed");
+////			return Response.status(Status.FORBIDDEN).build();
+////		}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(userEntity == null) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			UsersData newUser = new UsersData();
+//			
+////			newUser.setUsername(userEntity.getKey().getName());
+////			newUser.setName(userEntity.getString("user_name"));
+////			newUser.setEmail(userEntity.getString("user_email"));
+////			newUser.setProfile(userEntity.getString("user_profile"));
+////			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+////			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+////			newUser.setLocation(userEntity.getString("user_location"));
+////			newUser.setBirthday(userEntity.getString("user_birthday"));
+////			newUser.setGender(userEntity.getString("user_gender"));
+////			newUser.setImage(userEntity.getString("user_image"));
+////			newUser.setImage(userEntity.getString("user_hours"));
+////			newUser.setJoinedActivities(userEntity.getList("user_activities"));
+////			newUser.setCreatedActivities(userEntity.getList("created_activities"));
+////			newUser.setFollowings(userEntity.getList("user_following"));
+//
+//			newUser.setUsername(userEntity.getKey().getName());
+//			newUser.setName(userEntity.getString("user_name"));
+//			newUser.setEmail(userEntity.getString("user_email"));
+//			newUser.setProfile(userEntity.getString("user_profile"));
+//			newUser.setPhoneNumber(userEntity.getString("user_phone_number"));
+//			newUser.setMobileNumber(userEntity.getString("user_mobile_number"));
+//			newUser.setLocation(userEntity.getString("user_location"));
+//			newUser.setFollowings(userEntity.getLong("user_following"));
+//			
+//			newUser.setImage(userEntity.getString("user_image"));
+//			newUser.setOrg(userEntity.getBoolean("is_org"));
+//			newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+//			
+//
+//			if(userEntity.contains("user_joined_activities") )
+//				newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
+////			if(userEntity.contains("created_activities"))
+////				
+////			if(userEntity.contains("user_following"))
+////			
+//			if(userEntity.contains("org_followers"))
+//				newUser.setFollowers(userEntity.getLong("org_followers"));
+//			if(userEntity.contains("user_birthday"))
+//				newUser.setBirthday(userEntity.getString("user_birthday"));
+//			if(userEntity.contains("user_gender"))
+//				newUser.setGender(userEntity.getString("user_gender"));
+//			
+//
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
+//			
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
+	
+	@Authorize
+	@GET
 	@Path("/user")
-	@Consumes(MediaType.APPLICATION_JSON)
+//	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetUserNoLogin(AuthToken token) {
+	public Response doGetUserNoLogin(@Context HttpHeaders header) {
 		
+		String username = getUsername(header);
 		
 		Transaction txn = datastore.newTransaction();
 		
-		Key tokenKey = database.getTokenKey(token);
+//		Key tokenKey = database.getTokenKey(token);
 		
-		Entity tokenEntity = txn.get(tokenKey);
+//		Entity tokenEntity = txn.get(tokenKey);
 		
-		Key userKey = database.getUserKey(token.getUsername());	
+		Key userKey = database.getUserKey(username);	
 		
 		
 		try {
@@ -1060,11 +1528,11 @@ public class UserResource{
 //			LOG.warning("Token Authentication Failed");
 //			return Response.status(Status.FORBIDDEN).build();
 //		}
-			if(tokenEntity == null) {
-				txn.rollback();
-				LOG.warning("Token Authentication Failed");
-				return Response.status(Status.FORBIDDEN).build();
-			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
 			
 			if(userEntity == null) {
 				txn.rollback();
@@ -1139,19 +1607,115 @@ public class UserResource{
 			}
 		}
 	}
+
 	
-	
-	
+//	@POST
+//	@Path("/follow/{username}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doFollow(AuthToken token, @PathParam("username") String username) {
+//		Transaction txn = datastore.newTransaction();
+//		
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
+//		try {
+//			
+////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////			txn.rollback();
+////			LOG.warning("Token Authentication Failed");
+////			return Response.status(Status.FORBIDDEN).build();
+////		}
+//		
+//			
+//			
+//		if(tokenEntity == null) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+//		
+//		
+//		Key followKey = factory
+//				.addAncestor(PathElement.of("User", token.getUsername()))
+//				.setKind("Following")
+//				.newKey(username);
+//		
+//		Entity followEntity = txn.get(followKey);
+//		
+//
+//		
+//
+//		if(followEntity !=null) {
+//			txn.rollback();
+//			LOG.warning("This follow already exists");
+//			return Response.status(Status.BAD_REQUEST).entity("Follow already exists.").build();
+//		}
+//
+//		
+//		Key selfUserKey = database.getUserKey(token.getUsername());
+//		Key targetUserKey = database.getUserKey(username);
+//		
+//		Entity selfEntity = txn.get(selfUserKey);
+//		Entity targetEntity = txn.get(targetUserKey);
+//		
+//		long followings = selfEntity.getLong("user_following")+1;
+//		long followers = targetEntity.getLong("user_followers")+1; 
+//		
+//		Entity newSelf = Entity.newBuilder(selfEntity)
+//				.set("user_following", followings)
+//				.build();
+//		
+//		Entity newTarget = Entity.newBuilder(targetEntity)
+//				.set("user_followers", followers)
+//				.build();
+//		
+//		txn.update(newSelf, newTarget);
+//		
+//
+//		LOG.warning("follow on user " + username + " registered");
+//
+//		followEntity = Entity.newBuilder(followKey)
+//				.set("follower", token.getUsername())
+//				.set("following", username)
+//				.build();
+//		
+//
+//		txn.add(followEntity);
+//		
+//		txn.commit();
+//		return Response.ok(" {} ").build();
+//
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//
+//		
+//	}
+
+	@Authorize
 	@POST
 	@Path("/follow/{username}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doFollow(AuthToken token, @PathParam("username") String username) {
+	public Response doFollow(@Context HttpHeaders header, @PathParam("username") String username) {
+		
+		String userSelf = getUsername(header);
+		
 		Transaction txn = datastore.newTransaction();
 		
-		Key tokenKey = database.getTokenKey(token);
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
 		
-		Entity tokenEntity = txn.get(tokenKey);
 		try {
 			
 //			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
@@ -1162,15 +1726,15 @@ public class UserResource{
 		
 			
 			
-		if(tokenEntity == null) {
-			txn.rollback();
-			LOG.warning("Token Authentication Failed");
-			return Response.status(Status.FORBIDDEN).build();
-		}
-		
+//		if(tokenEntity == null) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+//		
 		
 		Key followKey = factory
-				.addAncestor(PathElement.of("User", token.getUsername()))
+				.addAncestor(PathElement.of("User", userSelf))
 				.setKind("Following")
 				.newKey(username);
 		
@@ -1186,7 +1750,7 @@ public class UserResource{
 		}
 
 		
-		Key selfUserKey = database.getUserKey(token.getUsername());
+		Key selfUserKey = database.getUserKey(userSelf);
 		Key targetUserKey = database.getUserKey(username);
 		
 		Entity selfEntity = txn.get(selfUserKey);
@@ -1209,7 +1773,7 @@ public class UserResource{
 		LOG.warning("follow on user " + username + " registered");
 
 		followEntity = Entity.newBuilder(followKey)
-				.set("follower", token.getUsername())
+				.set("follower", userSelf)
 				.set("following", username)
 				.build();
 		
@@ -1233,20 +1797,87 @@ public class UserResource{
 
 		
 	}
-
 	
 
-	 @POST
-	 @Path("/user/hours")
-	 @Consumes(MediaType.APPLICATION_JSON)
-	 @Produces(MediaType.APPLICATION_JSON)
-	 public Response doGetUserHours(AuthToken token) {
+//	 @POST
+//	 @Path("/user/hours")
+//	 @Consumes(MediaType.APPLICATION_JSON)
+//	 @Produces(MediaType.APPLICATION_JSON)
+//	 public Response doGetUserHours(AuthToken token) {
+//		 
+//		 Transaction txn = datastore.newTransaction();
+//				
+//			Key tokenKey = database.getTokenKey(token);
+//			
+//			Entity tokenEntity = txn.get(tokenKey);
+//			try {
+////				if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////					txn.rollback();
+////					LOG.warning("Token Authentication Failed");
+////					return Response.status(Status.FORBIDDEN).build();
+////				}
+//				
+//				if(tokenEntity == null) {
+//					txn.rollback();
+//					LOG.warning("Token Authentication Failed");
+//					return Response.status(Status.FORBIDDEN).build();
+//				}
+//				
+//				Query<Entity> query = Query.newEntityQueryBuilder()
+//						.setKind("User")
+//						.setOrderBy(OrderBy.desc("user_hours"))
+//						.setLimit(25)
+//						.build();
+//				
+//				
+//				QueryResults<Entity> hoursQuery = datastore.run(query);
+//				
+//				List<UsersData> users = new ArrayList<>(); 
+//				
+//				
+//				hoursQuery.forEachRemaining(user -> {
+//					
+//					UsersData nextUser = new UsersData();
+//					nextUser.setUsername(user.getKey().getName());
+//					nextUser.setName(user.getString("user_name"));
+//					nextUser.setHoursDone(user.getLong("user_hours"));
+//					
+//					users.add(nextUser);
+//					
+//				});
+//				
+//				txn.commit();
+////				return Response.ok(" {} ").build();
+//				return Response.status(Status.OK).entity(g.toJson(users)).build();
+//				
+//			}catch(Exception e) {
+//				txn.rollback();
+//				LOG.warning("exception "+ e.toString());
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//			}finally {
+//				if(txn.isActive()) {
+//					txn.rollback();
+//					LOG.warning("entered finally");
+//					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//				}
+//			}
+//		 
+//	 }
+	
+	@Authorize
+	@GET
+	@Path("/user/hours")
+//	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUserHours() {
+	 
+//		String username = getUsername(header);
 		 
-		 Transaction txn = datastore.newTransaction();
+		Transaction txn = datastore.newTransaction();
 				
-			Key tokenKey = database.getTokenKey(token);
+//			Key tokenKey = database.getTokenKey(token);
 			
-			Entity tokenEntity = txn.get(tokenKey);
+//		Entity tokenEntity = txn.get(tokenKey);
 			try {
 //				if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
 //					txn.rollback();
@@ -1254,11 +1885,11 @@ public class UserResource{
 //					return Response.status(Status.FORBIDDEN).build();
 //				}
 				
-				if(tokenEntity == null) {
-					txn.rollback();
-					LOG.warning("Token Authentication Failed");
-					return Response.status(Status.FORBIDDEN).build();
-				}
+//				if(tokenEntity == null) {
+//					txn.rollback();
+//					LOG.warning("Token Authentication Failed");
+//					return Response.status(Status.FORBIDDEN).build();
+//				}
 				
 				Query<Entity> query = Query.newEntityQueryBuilder()
 						.setKind("User")
@@ -1300,19 +1931,91 @@ public class UserResource{
 			}
 		 
 	 }
+
 	
+//	@POST
+//	@Path("/listorg")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doListOrgs(AuthToken token) {
+//		 	Transaction txn = datastore.newTransaction();
+//			
+//			Key tokenKey = database.getTokenKey(token);
+//			
+//			Entity tokenEntity = txn.get(tokenKey);
+//			try {
+////				if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+//			
+//				if(tokenEntity == null) {
+//					txn.rollback();
+//					LOG.warning("Token Authentication Failed");
+//					return Response.status(Status.FORBIDDEN).build();
+//				}
+//			
+//				Query<Entity> query = Query.newEntityQueryBuilder()
+//						.setKind("User")
+//						.setFilter(
+//								StructuredQuery.PropertyFilter.eq("is_org", true))
+////						.setOrderBy(OrderBy.desc("user_hours"))
+//						.setOrderBy(OrderBy.desc("created_activities"))
+//						.setLimit(25)
+//						.build();
+//				
+//				QueryResults<Entity> rankingQuery = datastore.run(query);
+//
+//				List<UsersData> users = new ArrayList<>(); 
+//				
+//				rankingQuery.forEachRemaining(user -> {
+//					UsersData nextUser = new UsersData();
+//					
+//					nextUser.setUsername(user.getKey().getName());
+//					nextUser.setName(user.getString("user_name"));
+//					nextUser.setEmail(user.getString("user_email"));
+//					nextUser.setProfile(user.getString("user_profile"));
+//					nextUser.setPhoneNumber(user.getString("user_phone_number"));
+//					nextUser.setMobileNumber(user.getString("user_mobile_number"));
+//					nextUser.setLocation(user.getString("user_location"));
+//					nextUser.setFollowings(user.getLong("user_following"));
+//					nextUser.setCreatedActivities(user.getLong("created_activities"));
+//					nextUser.setImage(user.getString("user_image"));
+//					nextUser.setOrg(user.getBoolean("is_org"));
+//					
+//					users.add(nextUser);
+//					
+//				});
+//			
+//				txn.commit();
+////				return Response.ok(" {} ").build();
+//				return Response.status(Status.OK).entity(g.toJson(users)).build();
+//				
+//			}catch(Exception e) {
+//				txn.rollback();
+//				LOG.warning("exception "+ e.toString());
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//			}finally {
+//				if(txn.isActive()) {
+//					txn.rollback();
+//					LOG.warning("entered finally");
+//					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//				}
+//			}
+//	}
 	
-	
-	@POST
+	@Authorize
+	@GET
 	@Path("/listorg")
-	@Consumes(MediaType.APPLICATION_JSON)
+//	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doListOrgs(AuthToken token) {
+	public Response doListOrgs() {
 		 	Transaction txn = datastore.newTransaction();
 			
-			Key tokenKey = database.getTokenKey(token);
+//			Key tokenKey = database.getTokenKey(token);
 			
-			Entity tokenEntity = txn.get(tokenKey);
+//			Entity tokenEntity = txn.get(tokenKey);
 			try {
 //				if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
 //				txn.rollback();
@@ -1320,11 +2023,11 @@ public class UserResource{
 //				return Response.status(Status.FORBIDDEN).build();
 //			}
 			
-				if(tokenEntity == null) {
-					txn.rollback();
-					LOG.warning("Token Authentication Failed");
-					return Response.status(Status.FORBIDDEN).build();
-				}
+//				if(tokenEntity == null) {
+//					txn.rollback();
+//					LOG.warning("Token Authentication Failed");
+//					return Response.status(Status.FORBIDDEN).build();
+//				}
 			
 				Query<Entity> query = Query.newEntityQueryBuilder()
 						.setKind("User")
@@ -1377,17 +2080,80 @@ public class UserResource{
 	
 	
 	
+//	@POST
+//	@Path("/get/followings")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetFollowings(AuthToken token) {
+//		Transaction txn = datastore.newTransaction();
+//		
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
+//		try {
+////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+//			
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			Query <Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("Following")
+//					.setFilter(
+//							PropertyFilter.eq("follower", token.getUsername()))
+//					.build();
+//			
+//			QueryResults<Entity> followingsQuery = datastore.run(query);
+//			
+//			
+//			List<String> users = new ArrayList<>(); 
+//			
+//			followingsQuery.forEachRemaining(user->{
+//				String nextUser;
+//				nextUser = user.getKey().getName();
+//				users.add(nextUser);
+//			});
+//				
+//				
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(users)).build();	
+//				
+//				
+//
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
 	
-	@POST
+	@Authorize
+	@GET
 	@Path("/get/followings")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetFollowings(AuthToken token) {
+	public Response doGetFollowings(@Context HttpHeaders header) {
+		
+		
+		String username = getUsername(header);
+		
 		Transaction txn = datastore.newTransaction();
 		
-		Key tokenKey = database.getTokenKey(token);
+//		Key tokenKey = database.getTokenKey(token);
 		
-		Entity tokenEntity = txn.get(tokenKey);
+//		Entity tokenEntity = txn.get(tokenKey);
 		try {
 //			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
 //				txn.rollback();
@@ -1395,16 +2161,16 @@ public class UserResource{
 //				return Response.status(Status.FORBIDDEN).build();
 //			}
 			
-			if(tokenEntity == null) {
-				txn.rollback();
-				LOG.warning("Token Authentication Failed");
-				return Response.status(Status.FORBIDDEN).build();
-			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
 			
 			Query <Entity> query = Query.newEntityQueryBuilder()
 					.setKind("Following")
 					.setFilter(
-							PropertyFilter.eq("follower", token.getUsername()))
+							PropertyFilter.eq("follower", username))
 					.build();
 			
 			QueryResults<Entity> followingsQuery = datastore.run(query);
@@ -1439,16 +2205,100 @@ public class UserResource{
 	
 	
 	
-	@POST
+//	@POST
+//	@Path("/isfollowing/{username}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doIsFollowing(AuthToken token, @PathParam("username") String username) {
+//		Transaction txn = datastore.newTransaction();
+//		
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
+//		try {
+////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+//			
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
+//			
+//			Query <Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("Following")
+//					.setFilter(
+////							PropertyFilter.gt("__key__", factory.setKind("Following").newKey(username)))
+////							PropertyFilter.gt("__key__",factory.newKey(username)))
+//							CompositeFilter.and(
+//									PropertyFilter.hasAncestor(factory.setKind("User").newKey(token.getUsername())),
+//									PropertyFilter.eq("following", username)
+//									)
+//							)
+////											factory.setKind("User").addAncestors(PathElement.of("User", token.getUsername()), PathElement.of("User", username)).newKey(username)), 
+////							PropertyFilter.eq("follower", token.getUsername())
+////							))
+//					.build();
+//			
+//			QueryResults<Entity> followingsQuery = datastore.run(query);
+//			
+//			
+//			List<String> users = new ArrayList<>(); 
+//			
+//			
+//			boolean isFollowing=false;
+//			
+////			if(followingsQuery.hasNext())
+////				isFollowing=true;
+//			
+////			followingsQuery.forEachRemaining(user->{
+////				String nextUser;
+////				nextUser = user.getKey().getName();
+////				users.add(nextUser);
+////			});
+////			
+////			if(users.contains(username))
+////				isFollowing=true;
+////				
+//			
+//			if(followingsQuery.hasNext())
+//				isFollowing=true;
+//				
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(isFollowing)).build();	
+//				
+//				
+//
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
+	
+	@Authorize
+	@GET
 	@Path("/isfollowing/{username}")
-	@Consumes(MediaType.APPLICATION_JSON)
+//	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doIsFollowing(AuthToken token, @PathParam("username") String username) {
+	public Response doIsFollowing(@Context HttpHeaders header, @PathParam("username") String username) {
+		
+		String userSelf = getUsername(header);
+		
 		Transaction txn = datastore.newTransaction();
 		
-		Key tokenKey = database.getTokenKey(token);
-		
-		Entity tokenEntity = txn.get(tokenKey);
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
 		try {
 //			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
 //				txn.rollback();
@@ -1456,11 +2306,11 @@ public class UserResource{
 //				return Response.status(Status.FORBIDDEN).build();
 //			}
 			
-			if(tokenEntity == null) {
-				txn.rollback();
-				LOG.warning("Token Authentication Failed");
-				return Response.status(Status.FORBIDDEN).build();
-			}
+//			if(tokenEntity == null) {
+//				txn.rollback();
+//				LOG.warning("Token Authentication Failed");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
 			
 			Query <Entity> query = Query.newEntityQueryBuilder()
 					.setKind("Following")
@@ -1468,7 +2318,7 @@ public class UserResource{
 //							PropertyFilter.gt("__key__", factory.setKind("Following").newKey(username)))
 //							PropertyFilter.gt("__key__",factory.newKey(username)))
 							CompositeFilter.and(
-									PropertyFilter.hasAncestor(factory.setKind("User").newKey(token.getUsername())),
+									PropertyFilter.hasAncestor(factory.setKind("User").newKey(userSelf)),
 									PropertyFilter.eq("following", username)
 									)
 							)
@@ -1480,7 +2330,7 @@ public class UserResource{
 			QueryResults<Entity> followingsQuery = datastore.run(query);
 			
 			
-			List<String> users = new ArrayList<>(); 
+//			List<String> users = new ArrayList<>(); 
 			
 			
 			boolean isFollowing=false;
@@ -1517,19 +2367,112 @@ public class UserResource{
 				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 			}
 		}
-	}
+	}	
 	
+//	@POST
+//	@Path("/unfollow/{username}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doUnfollow(AuthToken token, @PathParam("username") String username) {
+//		Transaction txn = datastore.newTransaction();
+//		
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
+//		try {
+//			
+////			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
+////			txn.rollback();
+////			LOG.warning("Token Authentication Failed");
+////			return Response.status(Status.FORBIDDEN).build();
+////		}
+//		
+//		if(tokenEntity == null) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
+//		
+//		
+//		Key followKey = factory
+//				.addAncestors(PathElement.of("User", token.getUsername()))
+//				.setKind("Following")
+//				.newKey(username);
+//		
+//		Entity followEntity = txn.get(followKey);
+//		
+//
+//		
+//
+//		if(followEntity ==null) {
+//			txn.rollback();
+//			LOG.warning("This follow doesnt exists");
+//			return Response.status(Status.BAD_REQUEST).entity("Follow doesnt exists.").build();
+//		}
+//
+//		
+//		Key selfUserKey = database.getUserKey(token.getUsername());
+//		Key targetUserKey = database.getUserKey(username);
+//		
+//		Entity selfEntity = txn.get(selfUserKey);
+//		Entity targetEntity = txn.get(targetUserKey);
+//		
+//		long followings = selfEntity.getLong("user_following")-1;
+//		long followers = targetEntity.getLong("user_followers")-1; 
+//		
+//		Entity newSelf = Entity.newBuilder(selfEntity)
+//				.set("user_following", followings)
+//				.build();
+//		
+//		Entity newTarget = Entity.newBuilder(targetEntity)
+//				.set("user_followers", followers)
+//				.build();
+//		
+//		txn.update(newSelf, newTarget);
+//		
+//
+//		LOG.warning("follow on user " + username + " deleted");
+//
+////		followEntity = Entity.newBuilder(followKey)
+////				.set("follower", token.getUsername())
+//////				.set("following", token.getUsername())
+////				.build();
+//		
+//		txn.delete(followKey);
+//		
+//		txn.commit();
+//		return Response.ok(" {} ").build();
+//
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//
+//		
+//	}
 	
+	@Authorize
 	@POST
 	@Path("/unfollow/{username}")
-	@Consumes(MediaType.APPLICATION_JSON)
+//	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doUnfollow(AuthToken token, @PathParam("username") String username) {
+	public Response doUnfollow(@Context HttpHeaders header, @PathParam("username") String username) {
+		
+		String userSelf = getUsername(header);
+		
 		Transaction txn = datastore.newTransaction();
 		
-		Key tokenKey = database.getTokenKey(token);
+//		Key tokenKey = database.getTokenKey(token);
+//		
+//		Entity tokenEntity = txn.get(tokenKey);
 		
-		Entity tokenEntity = txn.get(tokenKey);
 		try {
 			
 //			if(tokenEntity == null || System.currentTimeMillis()>token.getExpirationData()) {
@@ -1538,15 +2481,15 @@ public class UserResource{
 //			return Response.status(Status.FORBIDDEN).build();
 //		}
 		
-		if(tokenEntity == null) {
-			txn.rollback();
-			LOG.warning("Token Authentication Failed");
-			return Response.status(Status.FORBIDDEN).build();
-		}
+//		if(tokenEntity == null) {
+//			txn.rollback();
+//			LOG.warning("Token Authentication Failed");
+//			return Response.status(Status.FORBIDDEN).build();
+//		}
 		
 		
 		Key followKey = factory
-				.addAncestors(PathElement.of("User", token.getUsername()))
+				.addAncestors(PathElement.of("User", userSelf))
 				.setKind("Following")
 				.newKey(username);
 		
@@ -1562,7 +2505,7 @@ public class UserResource{
 		}
 
 		
-		Key selfUserKey = database.getUserKey(token.getUsername());
+		Key selfUserKey = database.getUserKey(userSelf);
 		Key targetUserKey = database.getUserKey(username);
 		
 		Entity selfEntity = txn.get(selfUserKey);
@@ -1608,7 +2551,6 @@ public class UserResource{
 
 		
 	}
-	
 	 
 	
 	//need autentication
