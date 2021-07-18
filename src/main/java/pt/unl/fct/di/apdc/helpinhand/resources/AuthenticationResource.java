@@ -64,7 +64,7 @@ public class AuthenticationResource {
 	
 	
 	@POST
-	@Path("/loginJWT")
+	@Path("/login")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doLoginJWT(Request request) {
@@ -112,7 +112,7 @@ public class AuthenticationResource {
 					
 					Date now = new Date(System.currentTimeMillis());
 //					Date late = newDate(Timestamp.now() + TimeUnit.HOURS.toMillis(1));
-					Date later = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+					Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
 
 					
 					Algorithm algorithm = Algorithm.HMAC512("secret");
@@ -126,16 +126,16 @@ public class AuthenticationResource {
 							.withIssuer(request.getUsername())
 							.sign(algorithm);
 					
-					Entity tokenEntity = Entity.newBuilder(tokenKey)
-							.set("issuer", request.getUsername())
-							.set("role", user.getString("user_role"))
-							.set("image", user.getString("user_image"))
-							.set("creationData",now.toString() )
-							.set("expirationData", later.toString())
-							.set("secret","secret")
-							.build();
-					
-					txn.put(tokenEntity);
+//					Entity tokenEntity = Entity.newBuilder(tokenKey)
+//							.set("issuer", request.getUsername())
+//							.set("role", user.getString("user_role"))
+//							.set("image", user.getString("user_image"))
+//							.set("creationData",now.toString() )
+//							.set("expirationData", later.toString())
+//							.set("secret","secret")
+//							.build();
+//					
+//					txn.put(tokenEntity);
 					txn.commit();
 					
 					return Response.ok(jwtToken).build();
@@ -183,110 +183,110 @@ public class AuthenticationResource {
 //	}
 	
 	
-	@POST
-	@Path("/login")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-//	public Response doLogin(Request request, 
-//			@Context HttpServletRequest req, 
-//			@Context HttpHeaders headers) {
-		public Response doLogin(Request request
-				) {
-		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
-		
-		Key userKey = datastore.newKeyFactory()
-				.setKind("User")
-				.newKey(request.getUsername());
-		
-		//added
-//		Key ctrsKey = datastore.newKeyFactory()
-//				.addAncestors(PathElement.of("User", request.getUsername()))
-//				.setKind("UserStats").newKey("counters");
-//		Key logKey = datastore.allocateId(
-//				datastore.newKeyFactory()
-//				.addAncestor(PathElement.of("User", request.getUsername()))
-//				.setKind("UserLog").newKey()
-//				);
-//		-----
-		
-		Transaction txn = datastore.newTransaction();
-		
-		try {
-			Entity user = txn.get(userKey);
-			
-			if(user == null) {
-				LOG.warning("Failed login attempt");
-				return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
-			}
-			
-			if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED")) {
-				LOG.warning("Failed login attempt");
-				return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
-			}
-			
-//			Entity stats = txn.get(ctrsKey);
-//			if(stats == null ) {
-//				stats = Entity.newBuilder(ctrsKey)
-//						.set("user_stats_logins", 0L)
-//						.set("user_stats_failed", 0L)
-//						.set("user_first_login", Timestamp.now())
-//						.set("user_last_login", Timestamp.now())
-//						.build();
-//			}
-			
+//	@POST
+//	@Path("/login")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+////	public Response doLogin(Request request, 
+////			@Context HttpServletRequest req, 
+////			@Context HttpHeaders headers) {
+//		public Response doLogin(Request request
+//				) {
+//		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
+//		
+//		Key userKey = datastore.newKeyFactory()
+//				.setKind("User")
+//				.newKey(request.getUsername());
+//		
+//		//added
+////		Key ctrsKey = datastore.newKeyFactory()
+////				.addAncestors(PathElement.of("User", request.getUsername()))
+////				.setKind("UserStats").newKey("counters");
+////		Key logKey = datastore.allocateId(
+////				datastore.newKeyFactory()
+////				.addAncestor(PathElement.of("User", request.getUsername()))
+////				.setKind("UserLog").newKey()
+////				);
+////		-----
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//		try {
+//			Entity user = txn.get(userKey);
 //			
-			String hashedPWD = user.getString("user_pwd");
-			if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
-				//added
-//				Entity log = Entity.newBuilder(logKey)
-//						.set("user_login_ip", req.getRemoteAddr())
-//						.set("user_login_host", req.getRemoteHost())
-//						.set("user_login_latlon", 
-//								//does not index this property value
-//								StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
-//								.setExcludeFromIndexes(true).build()
-//								) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
-//						.set("user_login_city", headers.getHeaderString("X-Appengine-City")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
-//						.set("user_login_country", headers.getHeaderString("X-Appengine-Country")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
-//						.set("user_login_time", Timestamp.now())
+//			if(user == null) {
+//				LOG.warning("Failed login attempt");
+//				return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+//			}
+//			
+//			if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED")) {
+//				LOG.warning("Failed login attempt");
+//				return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+//			}
+//			
+////			Entity stats = txn.get(ctrsKey);
+////			if(stats == null ) {
+////				stats = Entity.newBuilder(ctrsKey)
+////						.set("user_stats_logins", 0L)
+////						.set("user_stats_failed", 0L)
+////						.set("user_first_login", Timestamp.now())
+////						.set("user_last_login", Timestamp.now())
+////						.build();
+////			}
+//			
+////			
+//			String hashedPWD = user.getString("user_pwd");
+//			if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
+//				//added
+////				Entity log = Entity.newBuilder(logKey)
+////						.set("user_login_ip", req.getRemoteAddr())
+////						.set("user_login_host", req.getRemoteHost())
+////						.set("user_login_latlon", 
+////								//does not index this property value
+////								StringValue.newBuilder(headers.getHeaderString("X-AppEngine-CityLatLong"))
+////								.setExcludeFromIndexes(true).build()
+////								) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
+////						.set("user_login_city", headers.getHeaderString("X-Appengine-City")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
+////						.set("user_login_country", headers.getHeaderString("X-Appengine-Country")) //NEEDS HEADERS ON POSTMAN FOR LOCAL WORK
+////						.set("user_login_time", Timestamp.now())
+////						.build();
+////				 -----
+//				AuthToken token = new AuthToken(request.getUsername(),user.getString("user_role"));
+//				Key tokenKey = datastore.newKeyFactory()
+//						.addAncestor(PathElement.of("User", request.getUsername()))
+//						.setKind("Token")
+//						.newKey(token.getTokenID());
+//				Entity tokenEntity = Entity.newBuilder(tokenKey)
+//						.set("token_ID", token.getTokenID())
+//						.set("token_username",token.getUsername())
+//						.set("token_creationData",token.getCreationData())
+//						.set("token_expirationData", token.getExpirationData())
+//						.set("token_role", token.getRole())
 //						.build();
-//				 -----
-				AuthToken token = new AuthToken(request.getUsername(),user.getString("user_role"));
-				Key tokenKey = datastore.newKeyFactory()
-						.addAncestor(PathElement.of("User", request.getUsername()))
-						.setKind("Token")
-						.newKey(token.getTokenID());
-				Entity tokenEntity = Entity.newBuilder(tokenKey)
-						.set("token_ID", token.getTokenID())
-						.set("token_username",token.getUsername())
-						.set("token_creationData",token.getCreationData())
-						.set("token_expirationData", token.getExpirationData())
-						.set("token_role", token.getRole())
-						.build();
-//				txn.put(log,tokenEntity); //changed
-				txn.put(tokenEntity); //changed
-				LOG.warning("WARNING: User '" + request.getUsername() + "'logged in successfully.");
-				txn.commit();
-				return Response.ok(g.toJson(token)).build();
-				
-			}
-			else {
-				txn.rollback();
-				LOG.warning("Wrong password for username: " + request.getUsername());
-				return Response.status(Status.FORBIDDEN).entity("Wrong password or username").build();
-			}
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-	}
+////				txn.put(log,tokenEntity); //changed
+//				txn.put(tokenEntity); //changed
+//				LOG.warning("WARNING: User '" + request.getUsername() + "'logged in successfully.");
+//				txn.commit();
+//				return Response.ok(g.toJson(token)).build();
+//				
+//			}
+//			else {
+//				txn.rollback();
+//				LOG.warning("Wrong password for username: " + request.getUsername());
+//				return Response.status(Status.FORBIDDEN).entity("Wrong password or username").build();
+//			}
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
 	
 	
 	
