@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery;
@@ -13,12 +14,14 @@ import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
+import pt.unl.fct.di.apdc.helpinhand.data.Database;
 
 public class Verification {
 
 	private static final Logger LOG = Logger.getLogger(Verification.class.getName());
 	private final Gson g = new Gson();
 	private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+	Database database = new Database();
 	
 	public Verification() {
 		
@@ -67,6 +70,22 @@ public class Verification {
 		if(emailQuery.hasNext())
 			return true;
 
+		return false;
+	}
+	
+	public boolean existingUsername(String username) {
+		Key userKey = database.getUserKey(username);
+		
+		Query<Entity> query = Query.newEntityQueryBuilder()
+				.setKind("User")
+				.setFilter(
+						StructuredQuery.PropertyFilter.eq("__key__", userKey))
+				.build();
+		QueryResults<Entity> userQuery = datastore.run(query);
+		
+		if(userQuery.hasNext())
+			return true;
+		
 		return false;
 	}
 	

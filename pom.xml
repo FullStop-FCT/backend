@@ -141,6 +141,25 @@
  		</dependency>
 
 
+		<!-- STRIPE dependency -->
+
+		<dependency>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>20.64.0</version>
+		</dependency>
+
+
+
+		<!-- SEND GRID DEPENDENCY -->
+		
+		<!-- https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java -->
+		<dependency>
+   			<groupId>com.sendgrid</groupId>
+    		<artifactId>sendgrid-java</artifactId>
+    		<version>4.7.2</version>
+		</dependency>
+	
 
   </dependencies>
 

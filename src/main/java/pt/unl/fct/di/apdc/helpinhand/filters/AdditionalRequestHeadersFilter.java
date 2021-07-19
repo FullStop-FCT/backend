@@ -30,7 +30,7 @@ public class AdditionalRequestHeadersFilter implements ContainerRequestFilter {
 //		LOG.warning("we're in request headers filter now");
 		
 		
-		requestContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With, Authorization");
+		requestContext.getHeaders().add("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, X-Requested-With, Authorization, On-behalf-of, x-sg-elas-acl");
 		requestContext.getHeaders().add("Access-Control-Allow-Origin", "*");
 		requestContext.getHeaders().add("Access-Control-Allow-Methods", "HEAD,GET,PUT,POST,DELETE,OPTIONS,PATCH");
 		

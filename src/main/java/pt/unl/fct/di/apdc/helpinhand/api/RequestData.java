@@ -1,6 +1,6 @@
 package pt.unl.fct.di.apdc.helpinhand.api;
 
-public class Request {
+public class RequestData {
 
 	
 	private AuthToken token;
@@ -17,39 +17,39 @@ public class Request {
 
 	private String password;
 	
-	public Request() {
+	public RequestData() {
 		
 	}
 	
-	public Request(AuthToken token, String userToDelete) {
+	public RequestData(AuthToken token, String userToDelete) {
 		this.token = token;
 		this.userToDelete = userToDelete;
 		//delete
 	}
 	
-	public Request(String username, String password) {
+	public RequestData(String username, String password) {
 		this.username = username;
 		this.password = password;
 	}
 	
-	public Request(AuthToken token, UsersData userData) {
+	public RequestData(AuthToken token, UsersData userData) {
 		this.token = token;
 		this.userData = userData;
 		//update
 	}
 	
 	
-	public Request(AuthToken token, ActivitiesData activityData) {
+	public RequestData(AuthToken token, ActivitiesData activityData) {
 		this.token=token;
 		this.activityData = activityData;
 	}
 	
-	public Request(AuthToken token, RoutesData routeData) {
+	public RequestData(AuthToken token, RoutesData routeData) {
 		this.token=token;
 		this.setRouteData(routeData);
 	}
 	
-	public Request(AuthToken token, String userToChange, String attribute) {
+	public RequestData(AuthToken token, String userToChange, String attribute) {
 		this.token = token;
 		this.userToChange = userToChange;
 		this.attribute = attribute;

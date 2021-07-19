@@ -40,7 +40,7 @@ import com.google.cloud.datastore.Transaction;
 import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
-import pt.unl.fct.di.apdc.helpinhand.api.Request;
+import pt.unl.fct.di.apdc.helpinhand.api.RequestData;
 
 
 
@@ -67,7 +67,7 @@ public class AuthenticationResource {
 	@Path("/login")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doLoginJWT(Request request) {
+	public Response doLoginJWT(RequestData request) {
 		
 		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
 		
@@ -101,12 +101,12 @@ public class AuthenticationResource {
 //					AuthToken token = new AuthToken(request.getUsername(),user.getString("user_role"));
 					
 					
-					Key tokenKey = datastore.allocateId(
-							datastore.newKeyFactory()
-								.addAncestor(PathElement.of("User", request.getUsername()))
-								.setKind("JWTToken")
-								.newKey()
-							);
+//					Key tokenKey = datastore.allocateId(
+//							datastore.newKeyFactory()
+//								.addAncestor(PathElement.of("User", request.getUsername()))
+//								.setKind("JWTToken")
+//								.newKey()
+//							);
 					
 //					String encoded = Base64.getEncoder().encodeToString(token.getTokenID().getBytes());
 					
