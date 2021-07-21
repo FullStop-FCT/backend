@@ -225,6 +225,7 @@ public class UserResource{
 		
 		Request request = new Request();
 		
+//		String name="";
 		String id="";
 		
 		try {
@@ -239,16 +240,16 @@ public class UserResource{
 			
 			JSONObject json = new JSONObject(string);
 			
-			System.out.println(json.toString());
-			String name = json.getString("name");
-			json.getString("id");
+//			System.out.println(json.toString());
+//			name = json.getString("name");
+			id = json.getString("id");
 			
-			System.out.println(name);
-			System.out.println(id);
+//			System.out.println("name: "+ name);
+//			System.out.println("id: " + id);
 			
-			System.out.println(response.getStatusCode());
-			System.out.println(response.getBody());
-			System.out.println(response.getHeaders());
+//			System.out.println(response.getStatusCode());
+//			System.out.println(response.getBody());
+//			System.out.println(response.getHeaders());
 			
 			
 			
@@ -265,8 +266,8 @@ public class UserResource{
 	public Response doSendGridTest() {
 		
 		LOG.warning("Attempt to confirm signup for user ");
-		createMarketingList("new list");
-		return Response.ok(" {} ").build(); 
+		createMarketingList("test");
+		return Response.ok(" {} ").build();  
 		
 	}
 	
@@ -431,8 +432,8 @@ public class UserResource{
 		.set("user_creation_time", Timestamp.now())
 		.set("last_time_modified", Timestamp.now())
 		.set("is_org", false)
-
-		
+		.set("user_reports", LongValue.newBuilder(0).build())
+			
 		.set("user_followers", LongValue.newBuilder(0).build())
 		.set("user_gender", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
 		.set("user_birthday", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
@@ -468,6 +469,10 @@ public class UserResource{
 		.set("user_creation_time", Timestamp.now())
 		.set("last_time_modified", Timestamp.now())
 		.set("is_org", true)
+		
+		.set("user_reports", LongValue.newBuilder(0).build())
+		.set("contact_list_id", createMarketingList(userKey.getName()))
+
 		
 
 		//.set("org_followers", LongValue.newBuilder(0).setExcludeFromIndexes(true).build())
@@ -662,6 +667,8 @@ public class UserResource{
 				newUser.setImage(userEntity.getString("user_image"));
 				newUser.setOrg(userEntity.getBoolean("is_org"));
 				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+				newUser.setReports(userEntity.getLong("user_reports"));
+
 				
 
 				if(userEntity.contains("user_joined_activities") )
@@ -673,7 +680,10 @@ public class UserResource{
 					newUser.setBirthday(userEntity.getString("user_birthday"));
 				if(userEntity.contains("user_gender"))
 					newUser.setGender(userEntity.getString("user_gender"));
+				
  
+				if(userEntity.contains("contact_list_id"))
+					newUser.setContactListId(userEntity.getString("contact_list_id"));
 
 			txn.commit();
 			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
@@ -754,7 +764,7 @@ public class UserResource{
 				newUser.setImage(userEntity.getString("user_image"));
 				newUser.setOrg(userEntity.getBoolean("is_org"));
 				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
-				
+				newUser.setReports(userEntity.getLong("user_reports"));
 
 				if(userEntity.contains("user_joined_activities") )
 					newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
@@ -769,6 +779,9 @@ public class UserResource{
 				if(userEntity.contains("user_gender"))
 					newUser.setGender(userEntity.getString("user_gender"));
  
+				
+				if(userEntity.contains("contact_list_id"))
+					newUser.setContactListId(userEntity.getString("contact_list_id"));
 
 			txn.commit();
 			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
@@ -848,6 +861,7 @@ public class UserResource{
 			newUser.setOrg(userEntity.getBoolean("is_org"));
 			newUser.setCreatedActivities(userEntity.getLong("created_activities"));
 			
+			newUser.setReports(userEntity.getLong("user_reports"));
 
 			if(userEntity.contains("user_joined_activities") )
 				newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
@@ -862,7 +876,10 @@ public class UserResource{
 			if(userEntity.contains("user_gender"))
 				newUser.setGender(userEntity.getString("user_gender"));
 			
-
+			if(userEntity.contains("contact_list_id"))
+				newUser.setContactListId(userEntity.getString("contact_list_id"));
+			
+			
 			txn.commit();
 			return Response.status(Status.OK).entity(g.toJson(newUser)).build();
 			
@@ -880,6 +897,47 @@ public class UserResource{
 		}
 	}
 	
+	
+	
+	private void addContact(String listID, String userEmail) {
+		
+		String SENDGRID_API_KEY="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";
+		
+		
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+		
+		Request request = new Request();
+		
+		try {
+			request.setMethod(Method.PUT);
+			request.setEndpoint("/marketing/contacts");
+			request.setBody("{\"list_ids\":[\""+listID+"\"],\"contacts\":[{\"email\":\""+userEmail+"\"}]}");
+			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
+			
+			com.sendgrid.Response response = sg.api(request);
+			System.out.println(response.getStatusCode());
+			System.out.println(response.getBody());
+			System.out.println(response.getHeaders());
+//			"{\"list_ids\":[\"string\"],\"contacts\":[{\"email\":\"string (required)\"}]}"
+			
+			
+		}catch(IOException ex) {
+			LOG.warning(ex.getMessage());
+		}
+		
+	}
+	
+	
+	@GET
+	@Path("/contactTest")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doContactTest() {
+		
+		LOG.warning("Attempt to add contact to list");
+		addContact("1f91cfd6-14f6-4c58-bd46-4b350090e743","fokush@gmail.com");
+		return Response.ok(" {} ").build();  
+		
+	}
 	
 	
 	@Authorize
@@ -945,6 +1003,10 @@ public class UserResource{
 		
 
 			txn.add(followEntity);
+			
+			
+//			addContact(targetEntity.getString("contact_list_id"),selfEntity.getString("user_email"));
+			
 		
 			txn.commit();
 			return Response.ok(" {} ").build();
@@ -1062,6 +1124,10 @@ public class UserResource{
 					nextUser.setImage(user.getString("user_image"));
 					nextUser.setOrg(user.getBoolean("is_org"));
 					
+					nextUser.setReports(user.getLong("user_reports"));
+					
+					nextUser.setContactListId(user.getString("contact_list_id"));
+					
 					users.add(nextUser);
 					
 				});
@@ -1083,6 +1149,35 @@ public class UserResource{
 			}
 	}
 	
+	
+	
+	private void removeContact(String listID, String userEmail) {
+			
+		String SENDGRID_API_KEY="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";
+		
+		
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+		
+		Request request = new Request();
+		
+		try {
+			request.setMethod(Method.PUT);
+			request.setEndpoint("/marketing/contacts");
+			request.setBody("{\"list_ids\":[\""+listID+"\"],\"contacts\":[{\"email\":\""+userEmail+"\"}]}");
+			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
+			
+			com.sendgrid.Response response = sg.api(request);
+			System.out.println(response.getStatusCode());
+			System.out.println(response.getBody());
+			System.out.println(response.getHeaders());
+//			"{\"list_ids\":[\"string\"],\"contacts\":[{\"email\":\"string (required)\"}]}"
+			
+			
+		}catch(IOException ex) {
+			LOG.warning(ex.getMessage());
+		}
+		
+	}
 	
 	
 	@Authorize
@@ -1303,10 +1398,13 @@ public class UserResource{
 				Query<Entity> query = Query.newEntityQueryBuilder()
 						.setKind("User")
 						.setFilter(
-								StructuredQuery.PropertyFilter.eq("is_org", false))
-//						.setOrderBy(OrderBy.desc("user_hours"))
-//						.setOrderBy(OrderBy.desc("created_activities"))
-						.setLimit(25)
+								CompositeFilter.and(
+										PropertyFilter.eq("is_org", false),
+										PropertyFilter.eq("user_role", Roles.USER.toString())
+//										PropertyFilter.eq("user_image", "default.png")
+										)
+								)
+						.setLimit(30)
 						.build();
 				
 				QueryResults<Entity> rankingQuery = datastore.run(query);
@@ -1316,26 +1414,9 @@ public class UserResource{
 				rankingQuery.forEachRemaining(user -> {
 					UsersData nextUser = new UsersData();
 					
-					nextUser.setUsername(user.getKey().getName());
-					nextUser.setName(user.getString("user_name"));
-					nextUser.setEmail(user.getString("user_email"));
-					nextUser.setProfile(user.getString("user_profile"));
-					nextUser.setPhoneNumber(user.getString("user_phone_number"));
-					nextUser.setMobileNumber(user.getString("user_mobile_number"));
-					nextUser.setLocation(user.getString("user_location"));
-					nextUser.setFollowings(user.getLong("user_following"));
-					nextUser.setCreatedActivities(user.getLong("created_activities"));
-					nextUser.setImage(user.getString("user_image"));
-					nextUser.setOrg(user.getBoolean("is_org"));
-					
-					nextUser.setJoinedActivities(user.getLong("user_joined_activities"));
-					nextUser.setGender(user.getString("user_gender"));
-					nextUser.setBirthday(user.getString("user_birthday"));
-					nextUser.setFollowers(user.getLong("user_followers"));
-
-
-					
-					
+					nextUser.setUsername(user.getKey().getName());				
+//					nextUser.setReports(user.getLong("user_reports"));
+								
 					users.add(nextUser);
 					
 				});

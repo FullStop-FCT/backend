@@ -11,4 +11,9 @@ indexes:
    - name: is_org
    - name: created_activities
      direction: desc
-    
+
+
+- kind: UserJoinedActivity
+  properties:
+  - name: user
+  - name: activity_date

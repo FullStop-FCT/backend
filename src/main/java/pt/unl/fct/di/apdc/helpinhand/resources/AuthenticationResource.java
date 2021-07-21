@@ -164,6 +164,82 @@ public class AuthenticationResource {
 	}
 	
 	
+	@POST
+	@Path("/secretLogin")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doSecretLogin(RequestData request) {
+		
+		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
+		
+		Key staffKey = datastore.newKeyFactory()
+				.setKind("Staff")
+				.newKey(request.getUsername());
+		
+		
+			
+			
+			Transaction txn = datastore.newTransaction();
+			
+			try {
+				Entity staff = txn.get(staffKey);
+				
+				if(staff == null) {
+					LOG.warning("Failed login attempt");
+					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+				}
+				
+
+				
+				String hashedPWD = staff.getString("staff_pwd");
+				if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
+		
+
+					Date now = new Date(System.currentTimeMillis());
+
+					Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+
+					
+					Algorithm algorithm = Algorithm.HMAC512("secret");
+					String jwtToken = JWT.create()
+							.withClaim("role", staff.getString("staff_role"))
+							.withIssuedAt(now)
+							.withExpiresAt(later)
+							.withIssuer(request.getUsername())
+							.sign(algorithm);
+					
+
+					txn.commit();
+					
+					return Response.ok(jwtToken).build();
+				
+				
+				}
+				else {
+					txn.rollback();
+					LOG.warning("Wrong password for staff: " + request.getUsername());
+					return Response.status(Status.FORBIDDEN).entity("Wrong password or username").build();
+				}
+			}catch(Exception e) {
+				txn.rollback();
+				LOG.warning("exception "+ e.toString());
+				return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+			}finally {
+				if(txn.isActive()) {
+					txn.rollback();
+					LOG.warning("entered finally");
+					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+				}
+			}
+			
+	
+		
+	}
+	
+	
+	
+	
+	
 //	private String issueToken(String login, int expiration, AuthToken token) {
 //		
 //		try {

@@ -38,6 +38,9 @@ public class UsersData {
 	private boolean isOrg;
 
 	
+	private String contactListId;
+	private long reports;
+	
 
 	private String role;
 	//private String kind;
@@ -70,6 +73,7 @@ public class UsersData {
 		this.joinedActivities = 0;
 		this.followings = 0;
 		this.createdActivities = 0;
+		this.setReports(0);
 		
 		
 	}
@@ -89,6 +93,7 @@ public class UsersData {
 		this.createdActivities = 0;
 		this.followers = 0;
 		this.isOrg = isOrg;
+		this.setReports(0);
 
 	}
 	
@@ -105,7 +110,7 @@ public class UsersData {
 		this.birthday=birthday;
 		this.gender=gender;
 		this.image=image;
-		this.hoursDone = 0;
+//		this.hoursDone = 0; commented to make sense
 //		this.joinedActivities = new ArrayList<>();
 //		this.followings = new ArrayList<>();
 //		this.createdActivities = new ArrayList<>();
@@ -329,6 +334,26 @@ public class UsersData {
 
 	public void setFollowers(long followers) {
 		this.followers = followers;
+	}
+
+
+	public String getContactListId() {
+		return contactListId;
+	}
+
+
+	public void setContactListId(String contactListId) {
+		this.contactListId = contactListId;
+	}
+
+
+	public long getReports() {
+		return reports;
+	}
+
+
+	public void setReports(long reports) {
+		this.reports = reports;
 	}
 
 

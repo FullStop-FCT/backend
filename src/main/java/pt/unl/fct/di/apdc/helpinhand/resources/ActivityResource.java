@@ -91,7 +91,7 @@ public class ActivityResource {
 	
 	@Authorize
 	@POST
-	@Path("/insert/") //register
+	@Path("/insert") //register
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response doInsert(@HeaderParam ("Authorization") String header, RequestData request) {
 		LOG.warning("Attempt to create activity " + request.getActivityData().getTitle());
@@ -118,7 +118,9 @@ public class ActivityResource {
 					request.getActivityData().getStartHour(), //added
 					request.getActivityData().getEndHour(), 
 					request.getActivityData().getKeywords(),
-					request.getActivityData().getWaypoints()
+					request.getActivityData().getWaypoints(),
+					request.getActivityData().getActivityTime(),
+					request.getActivityData().getMaxWayPoints()
 					);
 			
 			
@@ -166,8 +168,10 @@ public class ActivityResource {
 						.set("activity_lon", request.getActivityData().getLon())
 						.set("activity_startHour", request.getActivityData().getStartHour())
 						.set("activity_endHour", request.getActivityData().getEndHour())
-						.set("activity_waypoints", request.getActivityData().getWaypoints())
+						
+						.set("activity_time", request.getActivityData().getActivityTime())
 
+						.set("activity_waypoints", convertToValueList(request.getActivityData().getWaypoints()))
 						.set("activity_keywords", convertToValueList(request.getActivityData().getKeywords()))
 						.build();
 				
@@ -321,6 +325,17 @@ public class ActivityResource {
 	}
 
 	
+	private Timestamp toTimestamp(String date) {
+		Date timestamp = null;
+		try {
+			timestamp = new SimpleDateFormat("yyyy-MM-dd").parse(date);
+			
+		}catch(ParseException e) {
+			e.printStackTrace();
+		}
+		return Timestamp.of(timestamp);
+	}
+	
 	@Authorize
 	@POST
 	@Path("/join/{activityID}/{activityOwner}")
@@ -376,12 +391,16 @@ public class ActivityResource {
 					.set("activity_participants", participants)
 					.build();
 			
+			Timestamp date = toTimestamp(activityEntity.getString("activity_date"));
+			
 			joinedEntity = Entity.newBuilder(joinKey)
 					.set("activity_ID", activityID)
 					.set("activity_title", activityEntity.getString("activity_title"))
 					.set("user", username) //just added
 					.set("owner", activityOwner)
-					.set("activity_date", activityEntity.getString("activity_date"))//just added
+					.set("activity_date", date)//just added
+					.set("activity_time", activityEntity.getLong("activity_time")) // just added
+//					activityEntity.get
 //					.set("user_username", token.getUsername())
 					.build();
 			
@@ -549,7 +568,10 @@ public class ActivityResource {
 		newAct.setParticipants(activity.getLong("activity_participants"));
 		newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
 		newAct.setTitle(activity.getString("activity_title"));
-		
+		newAct.setKeywords(convertToList(activity.getList("activity_waypoints")));
+//		newAct.setWaypoints(activity.getString("activity_waypoints")); //just added
+		newAct.setActivityTime(activity.getLong("activity_time"));//just added
+
 		return newAct;
 	}
 	
@@ -1026,6 +1048,8 @@ public class ActivityResource {
 				newAct.setID(activity.getString("activity_ID"));
 				newAct.setTitle(activity.getString("activity_title"));
 				newAct.setActivityOwner(activity.getString("owner"));
+				newAct.setActivityTime(activity.getLong("activity_time"));
+				newAct.setDate(activity.getTimestamp("activity_date").toString()); //added
 				
 				activities.add(newAct);
 			});
@@ -1107,6 +1131,66 @@ public class ActivityResource {
 			}
 		}
 	}	
-	
+
+	@Authorize
+	@GET
+	@Path("/listPastActivities")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetPastActivities(@Context HttpHeaders header) {
+		
+		String username = getUsername(header); 
+		
+		Transaction txn = datastore.newTransaction();
+		
+
+		
+		try {
+
+			Calendar cal = Calendar.getInstance();
+			
+			Timestamp today = Timestamp.of(cal.getTime());
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							CompositeFilter.and(PropertyFilter.eq("user", username), 
+									PropertyFilter.le("activity_date", today))
+							
+							)
+					.build();
+
+			
+			QueryResults<Entity> createdQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdQuery.forEachRemaining(activity -> {
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				newAct.setActivityOwner(activity.getString("owner"));
+				newAct.setActivityTime(activity.getLong("activity_time"));
+				
+				activities.add(newAct);
+			});
+			
+			
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
 	
 }

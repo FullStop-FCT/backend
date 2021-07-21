@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import pt.unl.fct.di.apdc.helpinhand.api.Location;
 
 import com.google.cloud.datastore.Value;
 
@@ -24,7 +25,9 @@ public class ActivitiesData {
 	private String startHour;
 	private String endHour;
 	private List<String> keywords;
-	private String waypoints;
+	private List<String> waypoints;
+	private long activityTime;
+	private int maxWayPoints;
 	
 	
 	public ActivitiesData() {
@@ -33,7 +36,7 @@ public class ActivitiesData {
 	
 	public ActivitiesData(String title, String description, String date, String location, 
 			long totalParticipants, String activityOwner, String category, String lat, String lon, 
-			String startHour, String endHour, List<String> keywords, String waypoints) {
+			String startHour, String endHour, List<String> keywords, List<String> waypoints, long activityTime, int maxWaypoints) {
 //		this.ID = UUID.randomUUID().fromString(title).toString();
 		this.ID = UUID.randomUUID().randomUUID().toString();
 		this.title=title;
@@ -51,7 +54,8 @@ public class ActivitiesData {
 //		this.setPoints(100);
 		this.keywords = keywords;
 		this.participants =0;
-		this.setWaypoints(waypoints);
+		this.waypoints=waypoints;
+		this.setActivityTime(activityTime);
 		
 	}
 
@@ -207,12 +211,28 @@ public class ActivitiesData {
 		this.participants = participants;
 	}
 
-	public String getWaypoints() {
+	public List<String> getWaypoints() {
 		return waypoints;
 	}
 
-	public void setWaypoints(String waypoints) {
+	public void setWaypoints(List<String> waypoints) {
 		this.waypoints = waypoints;
+	}
+
+	public long getActivityTime() {
+		return activityTime;
+	}
+
+	public void setActivityTime(long activityTime) {
+		this.activityTime = activityTime;
+	}
+
+	public int getMaxWayPoints() {
+		return maxWayPoints;
+	}
+
+	public void setMaxWayPoints(int maxWayPoints) {
+		this.maxWayPoints = maxWayPoints;
 	}
 
 }
