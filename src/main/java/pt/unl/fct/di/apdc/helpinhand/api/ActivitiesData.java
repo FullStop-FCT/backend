@@ -24,6 +24,7 @@ public class ActivitiesData {
 	private String startHour;
 	private String endHour;
 	private List<String> keywords;
+	private String waypoints;
 	
 	
 	public ActivitiesData() {
@@ -32,7 +33,7 @@ public class ActivitiesData {
 	
 	public ActivitiesData(String title, String description, String date, String location, 
 			long totalParticipants, String activityOwner, String category, String lat, String lon, 
-			String startHour, String endHour, List<String> keywords) {
+			String startHour, String endHour, List<String> keywords, String waypoints) {
 //		this.ID = UUID.randomUUID().fromString(title).toString();
 		this.ID = UUID.randomUUID().randomUUID().toString();
 		this.title=title;
@@ -50,6 +51,7 @@ public class ActivitiesData {
 //		this.setPoints(100);
 		this.keywords = keywords;
 		this.participants =0;
+		this.setWaypoints(waypoints);
 		
 	}
 
@@ -203,6 +205,14 @@ public class ActivitiesData {
 
 	public void setParticipants(long participants) {
 		this.participants = participants;
+	}
+
+	public String getWaypoints() {
+		return waypoints;
+	}
+
+	public void setWaypoints(String waypoints) {
+		this.waypoints = waypoints;
 	}
 
 }

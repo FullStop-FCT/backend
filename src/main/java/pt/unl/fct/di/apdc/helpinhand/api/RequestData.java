@@ -1,5 +1,9 @@
 package pt.unl.fct.di.apdc.helpinhand.api;
 
+import java.util.List;
+
+import com.google.cloud.datastore.Cursor;
+
 public class RequestData {
 
 	
@@ -17,8 +21,27 @@ public class RequestData {
 
 	private String password;
 	
+	private List<?> results;
+//	private int pageSize;
+	private Cursor cursor;
+	
+	private String cursorString;
+	
 	public RequestData() {
 		
+	}
+	
+	
+	public RequestData(List<?> results ,Cursor cursor) {
+		this.results=results;
+//		this.pageSize=pageSize;
+		this.setCursor(cursor);
+	}
+	
+	public RequestData(List<?> results ,String cursorString) {
+		this.results=results;
+//		this.pageSize=pageSize;
+		this.cursorString=cursorString;
 	}
 	
 	public RequestData(AuthToken token, String userToDelete) {
@@ -128,5 +151,25 @@ public class RequestData {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+
+	public Cursor getCursor() {
+		return cursor;
+	}
+
+
+	public void setCursor(Cursor cursor) {
+		this.cursor = cursor;
+	}
+
+
+	public List<?> getResults() {
+		return results;
+	}
+
+
+	public void setResults(List<?> results) {
+		this.results = results;
 	}
 }
