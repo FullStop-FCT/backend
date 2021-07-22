@@ -17,3 +17,9 @@ indexes:
   properties:
   - name: user
   - name: activity_date
+  
+- kind: User
+  properties:
+  - name: is_org
+  - name: user_name
+    direction: desc

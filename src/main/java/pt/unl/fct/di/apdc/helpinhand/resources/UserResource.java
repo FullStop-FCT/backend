@@ -217,17 +217,164 @@ public class UserResource{
 				
 	}
 	
-	@Authorize
+	
+	private void sendResetMail(String mailTo, String jwt) {
+		
+		
+		LOG.warning(jwt);
+		
+		DecodedJWT jwtDecoded = JWT.decode(jwt);
+		String username = jwtDecoded.getIssuer();
+		
+		Email from = new Email("HelpinHand@fullstop.website");
+
+		Email to = new Email("fullstophh@gmail.com"); //change to mailTo
+
+		Mail mail = new Mail();
+		mail.setFrom(from);
+
+		
+		mail.setTemplateId("d-93dbb807cf534616a856b87803ed080e"); //change template
+		
+		Personalization personalization = new Personalization();
+//		personalization.addDynamicTemplateData("username", username);
+		personalization.addDynamicTemplateData("url", "http://localhost:3000/reset-pwd/"+jwt);
+//		personalization.addDynamicTemplateData("url", "http://www.google.com");
+		personalization.addTo(to);
+		
+		mail.addPersonalization(personalization);
+	
+
+		
+		TrackingSettings trackingSettings = new TrackingSettings();
+		ClickTrackingSetting clickTrackingSetting = new ClickTrackingSetting();
+		clickTrackingSetting.setEnable(true);
+		clickTrackingSetting.setEnableText(true);
+
+		OpenTrackingSetting openTrackingSetting = new OpenTrackingSetting();
+		openTrackingSetting.setEnable(true);
+		
+	
+		
+		GoogleAnalyticsSetting googleAnalyticsSetting = new GoogleAnalyticsSetting();
+	    googleAnalyticsSetting.setEnable(true);
+	    
+		trackingSettings.setClickTrackingSetting(clickTrackingSetting);
+		trackingSettings.setOpenTrackingSetting(openTrackingSetting);
+	    trackingSettings.setGoogleAnalyticsSetting(googleAnalyticsSetting);
+	    
+	    
+		mail.setTrackingSettings(trackingSettings);
+		 
+		Email replyTo = new Email();
+	    replyTo.setName("Full Stop");
+	    replyTo.setEmail("HelpinHand@fullstop.website");
+	    mail.setReplyTo(replyTo);
+		
+		String SENDGRID_API_KEY="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";
+			 
+			 
+			 
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+		Request request = new Request();
+		try {
+			request.setMethod(Method.POST);
+			request.setEndpoint("mail/send");
+			request.setBody(mail.build());
+			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
+				  
+				  
+			sg.api(request);
+				 
+	  
+				  
+//				  com.sendgrid.Response response = sg.api(request);
+//				  LOG.warning("status code: " +response.getStatusCode());
+//				  System.out.println(response.getStatusCode());
+//				  LOG.warning("body: " + response.getBody());
+//				  
+//				  System.out.println(response.getBody());
+//				  
+//				  LOG.warning("header : "+ response.getHeaders());
+//				  System.out.println(response.getHeaders());
+			} catch (IOException ex) {
+				LOG.warning(ex.getMessage());
+			}
+	}
+	
+//	@Authorize
 	@POST
-	@Path("/changepassword")
+	@Path("/resetpwd")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doChangePassword(RequestData data) {
+	public Response doResetPwd(String username) {
+		LOG.warning("Attempt to reset password ");
+		Key userKey = database.getUserKey(username);
+		
+		try {
+			
+			Entity userEntity = txn.get(userKey);
+			
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			Date now = new Date(System.currentTimeMillis());
+			Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+			
+			Algorithm algorithm = Algorithm.HMAC512("secret");
+			String jwtToken = JWT.create()
+					.withClaim("role", userEntity.getString("user_role"))
+					.withClaim("image", userEntity.getString("user_image"))
+					.withIssuedAt(now)
+					.withExpiresAt(later)
+					.withIssuer(username)
+					.sign(algorithm);
+			
+			
+			sendResetMail(userEntity.getString("user_email"), jwtToken);
+			
+			String maskedEmail = userEntity.getString("user_email").replaceAll("(?<=.{3}).(?=[^@]*?.@)", "*");
+			
+			LOG.warning("Reset pwd email sent "+ maskedEmail);
+			
+			txn.commit();
+			return Response.ok("" + maskedEmail).build(); 
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("Something went wrong entered exception e: " + e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}finally{
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("Something went wrong entered finally.");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+		}
+	}
+	
+	@Authorize
+	@POST
+	@Path("/changepwd")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doChangePassword(@Context HttpHeaders header, PasswordChanger pwdChanger) {
 		LOG.warning("Attempt to change password ");
 		
 		Transaction txn = datastore.newTransaction();
 		
-		Key userKey = database.getUserKey(data.getUsername());
+		Key userKey = database.getUserKey(getUsername(header));
 		
 		
 		try {
@@ -241,23 +388,33 @@ public class UserResource{
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			if(userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
 				txn.rollback();
-				LOG.warning("User already confirmed sign up");
+				LOG.warning("No such user");
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
 			
-			if(!verifier.validatePassword(data.getPassword())) {
+			if(!verifier.validatePassword(pwdChanger.getPassword())) {
 				LOG.warning("Failed verifier with a missing or wrong parameter.");
+				txn.rollback();
 				return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
 			}
-			if(!data.getPassword().equals(data.getConfirmation())) {
+			if(!pwdChanger.getPassword().equals(pwdChanger.getConfirmation())) {
 				LOG.warning("Failed verifier with a missing or wrong parameter.");
+				txn.rollback();
 				return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
 			}
 			
-			return Response.ok().build();
+			userEntity = Entity.newBuilder(userEntity)
+					.set("user_pwd",StringValue.newBuilder(DigestUtils.sha512Hex(pwdChanger.getPassword())).setExcludeFromIndexes(true).build())
+					.build();
+			
+			txn.update(userEntity);
+			LOG.warning("password updated");
+			
+			txn.commit();
+			return Response.ok(" {} ").build(); 
 			
 		}catch(Exception e) {
 			txn.rollback();
@@ -318,6 +475,8 @@ public class UserResource{
 		return id;
 	}
 	
+	
+	//DONT NEED
 	@GET
 	@Path("/gridTest")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -340,8 +499,10 @@ public class UserResource{
 		
 		Email from = new Email("HelpinHand@fullstop.website");
 
-		Email to = new Email("fullstophh@gmail.com");
-
+//		Email to = new Email("fullstophh@gmail.com");
+		Email to = new Email(mailTo);
+		
+		
 		Mail mail = new Mail();
 		mail.setFrom(from);
 
@@ -435,13 +596,13 @@ public class UserResource{
 			if(userEntity == null) {
 				txn.rollback();
 				LOG.warning("No such user");
-				return Response.status(Status.FORBIDDEN).build();
+				return Response.status(Status.FORBIDDEN).entity("no such user").build();
 			}
 			
 			if(userEntity.getString("user_state").equals(State.ENABLED.toString())) {
 				txn.rollback();
 				LOG.warning("User already confirmed sign up");
-				return Response.status(Status.FORBIDDEN).build();
+				return Response.status(Status.FORBIDDEN).entity("enabled").build();
 			}
 			
 			
@@ -1224,9 +1385,6 @@ public class UserResource{
 			startCursor = Cursor.fromUrlSafe(startCursorString);
 		}
 		
-//		pageCursor = Cursor.copyFrom(bytes);
-		
-//		Cursor pageCursor;
 		
 		
 		LOG.warning("Doing list activities");
@@ -1237,6 +1395,7 @@ public class UserResource{
 			
 			EntityQuery.Builder queryBuilder = Query.newEntityQueryBuilder()
 					.setKind("User")
+					.setFilter(PropertyFilter.eq("is_org", true))
 					.setOrderBy(OrderBy.desc("user_name"))
 					.setLimit(pageSize)
 					.setStartCursor(startCursor);
@@ -1245,42 +1404,43 @@ public class UserResource{
 						
 			QueryResults<Entity> orgsQuery = datastore.run(queryBuilder.build());
 			
-			List<UsersData> activities = new ArrayList<>();
+			List<UsersData> users = new ArrayList<>();
 			
-//			orgsQuery.forEachRemaining(user -> {
+			orgsQuery.forEachRemaining(user -> {
 				
 				UsersData nextUser = new UsersData();
 				
 //				nextUser.setUsername(user.getKey().getName());
-//				nextUser.setName(user.getString("user_name"));
+				nextUser.setName(user.getString("user_name"));
 //				nextUser.setEmail(user.getString("user_email"));
 //				nextUser.setProfile(user.getString("user_profile"));
 //				nextUser.setPhoneNumber(user.getString("user_phone_number"));
 //				nextUser.setMobileNumber(user.getString("user_mobile_number"));
-//				nextUser.setLocation(user.getString("user_location"));
+				nextUser.setLocation(user.getString("user_location"));
 //				nextUser.setFollowings(user.getLong("user_following"));
+				nextUser.setFollowers(user.getLong("user_followers"));
 //				nextUser.setCreatedActivities(user.getLong("created_activities"));
-//				nextUser.setImage(user.getString("user_image"));
+				nextUser.setImage(user.getString("user_image"));
 //				nextUser.setOrg(user.getBoolean("is_org"));
-//				
+				
 //				nextUser.setReports(user.getLong("user_reports"));
-//				
+				
 //				nextUser.setContactListId(user.getString("contact_list_id"));
-//				
-//				users.add(nextUser);
-//			});
+				
+				users.add(nextUser);
+			});
 //			
 //			
-//			Cursor cursor = titlesQuery.getCursorAfter();
+			Cursor cursor = orgsQuery.getCursorAfter();
 			
 			String cursorString = null;
 			
-//			if(cursor!=null) {
-//				cursorString = cursor.toUrlSafe();
-//			}
-//			
+			if(cursor!=null) {
+				cursorString = cursor.toUrlSafe();
+			}
+////			
 			
-			RequestData data = new RequestData(activities, cursorString);
+			RequestData data = new RequestData(users, cursorString);
 			
 			txn.commit();
 			return Response.status(Status.OK).entity(g.toJson(data)).build();
@@ -1589,6 +1749,54 @@ public class UserResource{
 	}
 	
 	
+	
+	@Authorize
+	@POST
+	@Path("/report")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doReport(String username) {
+
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key userKey = database.getUserKey(username);	
+		
+		
+		try {
+				
+			Entity userEntity = txn.get(userKey);
+	
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).entity("nosuchuser").build();
+			}
+			
+			long reports = userEntity.getLong("user_reports")+1;
+			
+			userEntity = Entity.newBuilder(userEntity)
+					.set("user_reports", reports)
+					.build();
+			
+			txn.update(userEntity);
+			LOG.warning("User reported : " + username);
+			txn.commit();
+			return Response.ok(" {} ").build(); 
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
 
 	
 	//need autentication

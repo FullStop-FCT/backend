@@ -84,13 +84,15 @@ public class AuthenticationResource {
 				Entity user = txn.get(userKey);
 				
 				if(user == null) {
+					txn.rollback();
 					LOG.warning("Failed login attempt");
 					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
 				}
 				
 				if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED")) {
+					txn.rollback();
 					LOG.warning("Failed login attempt");
-					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+					return Response.status(Status.FORBIDDEN).entity("email").build();
 				}
 				
 				String hashedPWD = user.getString("user_pwd");
@@ -185,6 +187,7 @@ public class AuthenticationResource {
 				Entity staff = txn.get(staffKey);
 				
 				if(staff == null) {
+					txn.rollback();
 					LOG.warning("Failed login attempt");
 					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
 				}

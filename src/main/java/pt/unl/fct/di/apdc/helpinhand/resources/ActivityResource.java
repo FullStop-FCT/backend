@@ -568,7 +568,7 @@ public class ActivityResource {
 		newAct.setParticipants(activity.getLong("activity_participants"));
 		newAct.setTotalParticipants(activity.getLong("activity_total_participants"));
 		newAct.setTitle(activity.getString("activity_title"));
-		newAct.setKeywords(convertToList(activity.getList("activity_waypoints")));
+		newAct.setWaypoints(convertToList(activity.getList("activity_waypoints")));
 //		newAct.setWaypoints(activity.getString("activity_waypoints")); //just added
 		newAct.setActivityTime(activity.getLong("activity_time"));//just added
 
