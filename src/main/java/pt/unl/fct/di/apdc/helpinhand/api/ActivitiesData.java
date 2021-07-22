@@ -27,8 +27,7 @@ public class ActivitiesData {
 	private List<String> keywords;
 	private List<String> waypoints;
 	private long activityTime;
-	private int maxWayPoints;
-	
+
 	
 	public ActivitiesData() {
 		
@@ -36,7 +35,7 @@ public class ActivitiesData {
 	
 	public ActivitiesData(String title, String description, String date, String location, 
 			long totalParticipants, String activityOwner, String category, String lat, String lon, 
-			String startHour, String endHour, List<String> keywords, List<String> waypoints, long activityTime, int maxWaypoints) {
+			String startHour, String endHour, List<String> keywords, List<String> waypoints, long activityTime) {
 //		this.ID = UUID.randomUUID().fromString(title).toString();
 		this.ID = UUID.randomUUID().randomUUID().toString();
 		this.title=title;
@@ -227,12 +226,5 @@ public class ActivitiesData {
 		this.activityTime = activityTime;
 	}
 
-	public int getMaxWayPoints() {
-		return maxWayPoints;
-	}
-
-	public void setMaxWayPoints(int maxWayPoints) {
-		this.maxWayPoints = maxWayPoints;
-	}
 
 }

@@ -26,7 +26,6 @@ import javax.ws.rs.core.Response.Status;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy.KebabCaseStrategy;
 import com.google.api.client.json.Json;
 import com.google.appengine.repackaged.org.apache.commons.codec.digest.DigestUtils;
 import com.google.cloud.Timestamp;
@@ -34,6 +33,7 @@ import com.google.cloud.datastore.Cursor;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.EntityQuery;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.ListValue;
@@ -63,6 +63,7 @@ import com.sendgrid.helpers.mail.objects.TrackingSettings;
 
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
 import pt.unl.fct.di.apdc.helpinhand.api.Authorize;
+import pt.unl.fct.di.apdc.helpinhand.api.PasswordChanger;
 import pt.unl.fct.di.apdc.helpinhand.api.RequestData;
 import pt.unl.fct.di.apdc.helpinhand.api.Secured;
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
@@ -214,6 +215,63 @@ public class UserResource{
 			
 		}	
 				
+	}
+	
+	@Authorize
+	@POST
+	@Path("/changepassword")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doChangePassword(RequestData data) {
+		LOG.warning("Attempt to change password ");
+		
+		Transaction txn = datastore.newTransaction();
+		
+		Key userKey = database.getUserKey(data.getUsername());
+		
+		
+		try {
+			
+			Entity userEntity = txn.get(userKey);
+			
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("User already confirmed sign up");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			
+			if(!verifier.validatePassword(data.getPassword())) {
+				LOG.warning("Failed verifier with a missing or wrong parameter.");
+				return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+			}
+			if(!data.getPassword().equals(data.getConfirmation())) {
+				LOG.warning("Failed verifier with a missing or wrong parameter.");
+				return Response.status(Status.BAD_REQUEST).entity("Missing or wrong parameter.").build();
+			}
+			
+			return Response.ok().build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("Something went wrong entered exception e: " + e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}finally{
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("Something went wrong entered finally.");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+		}	
+		
 	}
 	
 	private String createMarketingList(String orgName) {
@@ -1147,6 +1205,98 @@ public class UserResource{
 					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 				}
 			}
+	}
+	
+	@Authorize
+	@POST
+	@Path("/listOrgsCursor")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doListOrgsCursor(String startCursorString) {
+		
+		Transaction txn = datastore.newTransaction();
+		
+		int pageSize;
+		
+		Cursor startCursor = null;
+		
+		if(startCursorString !=null && !startCursorString.equals("")) {
+			startCursor = Cursor.fromUrlSafe(startCursorString);
+		}
+		
+//		pageCursor = Cursor.copyFrom(bytes);
+		
+//		Cursor pageCursor;
+		
+		
+		LOG.warning("Doing list activities");
+		
+		try {
+
+			pageSize = 6;
+			
+			EntityQuery.Builder queryBuilder = Query.newEntityQueryBuilder()
+					.setKind("User")
+					.setOrderBy(OrderBy.desc("user_name"))
+					.setLimit(pageSize)
+					.setStartCursor(startCursor);
+
+
+						
+			QueryResults<Entity> orgsQuery = datastore.run(queryBuilder.build());
+			
+			List<UsersData> activities = new ArrayList<>();
+			
+//			orgsQuery.forEachRemaining(user -> {
+				
+				UsersData nextUser = new UsersData();
+				
+//				nextUser.setUsername(user.getKey().getName());
+//				nextUser.setName(user.getString("user_name"));
+//				nextUser.setEmail(user.getString("user_email"));
+//				nextUser.setProfile(user.getString("user_profile"));
+//				nextUser.setPhoneNumber(user.getString("user_phone_number"));
+//				nextUser.setMobileNumber(user.getString("user_mobile_number"));
+//				nextUser.setLocation(user.getString("user_location"));
+//				nextUser.setFollowings(user.getLong("user_following"));
+//				nextUser.setCreatedActivities(user.getLong("created_activities"));
+//				nextUser.setImage(user.getString("user_image"));
+//				nextUser.setOrg(user.getBoolean("is_org"));
+//				
+//				nextUser.setReports(user.getLong("user_reports"));
+//				
+//				nextUser.setContactListId(user.getString("contact_list_id"));
+//				
+//				users.add(nextUser);
+//			});
+//			
+//			
+//			Cursor cursor = titlesQuery.getCursorAfter();
+			
+			String cursorString = null;
+			
+//			if(cursor!=null) {
+//				cursorString = cursor.toUrlSafe();
+//			}
+//			
+			
+			RequestData data = new RequestData(activities, cursorString);
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(data)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
 	}
 	
 	

@@ -20,6 +20,7 @@ public class RequestData {
 
 
 	private String password;
+	private String confirmation;
 	
 	private List<?> results;
 //	private int pageSize;
@@ -31,6 +32,11 @@ public class RequestData {
 		
 	}
 	
+	public RequestData(String username, String password, String confirmation) {
+		this.username=username;
+		this.password=password;
+		this.confirmation=confirmation;
+	}
 	
 	public RequestData(List<?> results ,Cursor cursor) {
 		this.results=results;
@@ -171,5 +177,15 @@ public class RequestData {
 
 	public void setResults(List<?> results) {
 		this.results = results;
+	}
+
+
+	public String getConfirmation() {
+		return confirmation;
+	}
+
+
+	public void setConfirmation(String confirmation) {
+		this.confirmation = confirmation;
 	}
 }

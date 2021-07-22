@@ -76,7 +76,7 @@ Database database = new Database();
 			
 			System.out.println(role);
 			
-			if(!role.equals(Roles.GBO.toString()) && !role.equals(Roles.SU.toString())) {
+			if(!role.equals(Roles.BO.toString()) && !role.equals(Roles.ADMIN.toString())) {
 //				System.out.println(!role.equals(Roles.GBO.toString()));
 //				System.out.println(!role.equals(Roles.SU.toString()));
 				txn.rollback();
@@ -95,7 +95,7 @@ Database database = new Database();
 				staffEntity = Entity.newBuilder(staffKey)
 						.set("staff_email",staff.getEmail())
 						.set("staff_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(staff.getPassword())).setExcludeFromIndexes(true).build())
-						.set("staff_role", Roles.GBO.toString())
+						.set("staff_role", staff.getRole())
 						.build();
 			}
 			

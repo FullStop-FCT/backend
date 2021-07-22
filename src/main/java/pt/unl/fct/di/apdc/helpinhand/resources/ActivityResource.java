@@ -119,8 +119,8 @@ public class ActivityResource {
 					request.getActivityData().getEndHour(), 
 					request.getActivityData().getKeywords(),
 					request.getActivityData().getWaypoints(),
-					request.getActivityData().getActivityTime(),
-					request.getActivityData().getMaxWayPoints()
+					request.getActivityData().getActivityTime()
+//					request.getActivityData().getMaxWayPoints()
 					);
 			
 			
@@ -722,7 +722,7 @@ public class ActivityResource {
 	@Path("/listCursor")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doListUsersCursor(String startCursorString) {
+	public Response doListActivitiesCursor(String startCursorString) {
 		
 		Transaction txn = datastore.newTransaction();
 		
@@ -747,22 +747,10 @@ public class ActivityResource {
 			
 			EntityQuery.Builder queryBuilder = Query.newEntityQueryBuilder()
 					.setKind("Activity")
-//					.setFilter(
-//									PropertyFilter.hasAncestor(
-//											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
-//							)
 					.setOrderBy(OrderBy.desc("activity_title"))
 					.setLimit(pageSize)
 					.setStartCursor(startCursor);
-//					.build();
-		
-			
-			
-//			if(pageCursor != null) {
-//				queryBuilder.setStartCursor(pageCursor);
-////				queryBuilder.
-//	
-//			}
+
 
 						
 			QueryResults<Entity> titlesQuery = datastore.run(queryBuilder.build());
@@ -777,7 +765,6 @@ public class ActivityResource {
 				activities.add(newAct);
 			});
 			
-//			String pack;
 			
 			Cursor cursor = titlesQuery.getCursorAfter();
 			
@@ -787,12 +774,10 @@ public class ActivityResource {
 				cursorString = cursor.toUrlSafe();
 			}
 			
-//			Cursor nextPageCursor = titlesQuery.getCursorAfter();
 			
 			RequestData data = new RequestData(activities, cursorString);
 			
 			txn.commit();
-//			return Response.ok(" {} ").build();
 			return Response.status(Status.OK).entity(g.toJson(data)).build();
 			
 		}catch(Exception e) {
@@ -808,6 +793,8 @@ public class ActivityResource {
 		}
 		
 	}
+	
+	
 	
 	
 	@Authorize
@@ -1154,7 +1141,7 @@ public class ActivityResource {
 					.setKind("UserJoinedActivity")
 					.setFilter(
 							CompositeFilter.and(PropertyFilter.eq("user", username), 
-									PropertyFilter.le("activity_date", today))
+									PropertyFilter.le	("activity_date", today))
 							
 							)
 					.build();
