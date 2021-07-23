@@ -445,9 +445,11 @@ public class ActivityResource {
 		
 		Query<Entity> query = Query.newEntityQueryBuilder()
 				.setKind("UserJoinedActivity")
-				.setFilter(
-						PropertyFilter.eq("user", username)
-						)
+				.setFilter(CompositeFilter.and(
+						PropertyFilter.hasAncestor(factory.setKind("User").newKey(username)),
+						PropertyFilter.eq("activity_ID", activityID)
+//						PropertyFilter.eq("user", username)
+						))
 				
 				.build();
 		
@@ -680,7 +682,7 @@ public class ActivityResource {
 //									PropertyFilter.hasAncestor(
 //											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
 //							)
-					.setOrderBy(OrderBy.desc("activity_title"))
+					.setOrderBy(OrderBy.desc("activity_date"))
 					.setLimit(10)
 					.build();
 										
@@ -1121,7 +1123,7 @@ public class ActivityResource {
 
 	@Authorize
 	@GET
-	@Path("/listPastActivities")
+	@Path("/listPastActivities/{activityID}/{activityOwner}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response doGetPastActivities(@Context HttpHeaders header) {
 		
@@ -1180,4 +1182,91 @@ public class ActivityResource {
 		}
 	}
 	
+	
+	@Authorize
+	@GET
+	@Path("/listJoinedUsers/{activityID}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetJoinedUsers(@PathParam("activityID") String activityID) {
+		Transaction txn = datastore.newTransaction();
+		
+		
+		try {
+			
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							PropertyFilter.eq("activity_ID", activityID))
+					.build();
+			
+			QueryResults<Entity> results = datastore.run(query);
+			
+			List<String> users = new ArrayList<>();
+			
+			results.forEachRemaining(result-> {
+				
+				String newUser = result.getString("user");
+				
+//				ActivitiesData newAct = new ActivitiesData();
+//				newAct.setID(activity.getString("activity_ID"));
+//				newAct.setTitle(activity.getString("activity_title"));
+				
+				users.add(newUser);
+			});
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(users)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
+	
+	@Authorize
+	@POST
+	@Path("/addhours")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doAddHours(RequestData data) {
+		LOG.warning("Trying to add points to users");
+		
+		Transaction txn = datastore.newTransaction();
+		
+		try {
+		
+			data.getUsers().forEach(user->{
+				Key userKey = database.getUserKey(user);
+				Entity userEntity = txn.get(userKey);
+				if(userEntity!=null) {
+					long hours = userEntity.getLong("user_hours")+data.getMinutes();
+					userEntity = Entity.newBuilder(userEntity)
+							.set("user_hours", hours)
+							.build();
+					txn.update(userEntity);
+					LOG.warning("Points added to User : " + user);
+				}
+			});
+			txn.commit();
+			return Response.ok(" {} ").build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
 }

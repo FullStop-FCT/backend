@@ -79,7 +79,7 @@ public class UsersData {
 	}
 	
 	public UsersData(String username, String name, String email, String password, 
-			String confirmation, boolean isOrg) {
+			String confirmation, String phoneNumber, String location, boolean isOrg) {
 		this.username = username;
 		this.name = name;
 		this.email = email;
@@ -94,6 +94,8 @@ public class UsersData {
 		this.followers = 0;
 		this.isOrg = isOrg;
 		this.setReports(0);
+		this.phoneNumber = phoneNumber;
+		this.location = location;
 
 	}
 	

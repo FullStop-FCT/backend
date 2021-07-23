@@ -167,31 +167,29 @@ public class UserResource{
 				return Response.status(Status.BAD_REQUEST).entity("User already exists.").build();	
 			}else {
 			
+
 				
 				if(!userData.isOrg()) {
 					userEntity = createUserEntity(userData,userKey);
-					
-					Date now = new Date(System.currentTimeMillis());
-					Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
-					
-					Algorithm algorithm = Algorithm.HMAC512("secret");
-					String jwtToken = JWT.create()
-							.withClaim("role", userEntity.getString("user_role"))
-							.withClaim("image", userEntity.getString("user_image"))
-							.withIssuedAt(now)
-							.withExpiresAt(later)
-//							.withIssuedAt(Timestamp.now().toDate())
-//							.withExpiresAt(token.getExpirationData().toDate())
-							.withIssuer(userData.getUsername())
-							.sign(algorithm);
-					
-					
-					sendMail(userData.getEmail(), jwtToken);
-					
-					
+	
 				}else
 					userEntity = createOrgEntity(userData,userKey);
-
+				
+				Date now = new Date(System.currentTimeMillis());
+				Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+				
+				Algorithm algorithm = Algorithm.HMAC512("secret");
+				String jwtToken = JWT.create()
+						.withClaim("role", userEntity.getString("user_role"))
+						.withClaim("image", userEntity.getString("user_image"))
+						.withIssuedAt(now)
+						.withExpiresAt(later)
+//						.withIssuedAt(Timestamp.now().toDate())
+//						.withExpiresAt(token.getExpirationData().toDate())
+						.withIssuer(userData.getUsername())
+						.sign(algorithm);
+				
+				sendMail(userData.getEmail(), jwtToken);
 				
 				
 				txn.add(userEntity);
@@ -268,7 +266,7 @@ public class UserResource{
 		 
 		Email replyTo = new Email();
 	    replyTo.setName("Full Stop");
-	    replyTo.setEmail("HelpinHand@fullstop.website");
+	    replyTo.setEmail("hxp@fullstop.website");
 	    mail.setReplyTo(replyTo);
 		
 		String SENDGRID_API_KEY="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";
@@ -541,7 +539,7 @@ public class UserResource{
 		 
 		Email replyTo = new Email();
 	    replyTo.setName("Full Stop");
-	    replyTo.setEmail("HelpinHand@fullstop.website");
+	    replyTo.setEmail("hxp@fullstop.website");
 	    mail.setReplyTo(replyTo);
 		
 		String SENDGRID_API_KEY="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";
@@ -673,9 +671,11 @@ public class UserResource{
 		.set("user_name", userData.getName())
 		.set("user_email", userData.getEmail())
 		.set("user_pwd", StringValue.newBuilder(DigestUtils.sha512Hex(userData.getPassword())).setExcludeFromIndexes(true).build())
-		.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
-		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build())
+//		.set("user_phone_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build()) //adicionar ao construtor
+		.set("user_phone_number", StringValue.newBuilder(userData.getPhoneNumber()).setExcludeFromIndexes(true).build())
+		.set("user_mobile_number", StringValue.newBuilder("").setExcludeFromIndexes(true).build()) 
+//		.set("user_location", StringValue.newBuilder("").setExcludeFromIndexes(true).build()) //adicionar ao construtor
+		.set("user_location", StringValue.newBuilder(userData.getLocation()).setExcludeFromIndexes(true).build()) 
 		.set("user_image", StringValue.newBuilder("default.png").setExcludeFromIndexes(true).build())
 //		.set("user_following", ListValue.newBuilder().build()) //followed orgs
 //		.set("org_followers", ListValue.newBuilder().build())

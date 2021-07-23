@@ -28,8 +28,17 @@ public class RequestData {
 	
 	private String cursorString;
 	
+	private List<String> users;
+	private long minutes;
+	
 	public RequestData() {
 		
+	}
+	
+	
+	public RequestData(List<String> users , long minutes) {
+		this.users=users;
+		this.minutes = minutes;
 	}
 	
 	public RequestData(String username, String password, String confirmation) {
@@ -187,5 +196,25 @@ public class RequestData {
 
 	public void setConfirmation(String confirmation) {
 		this.confirmation = confirmation;
+	}
+
+
+	public List<String> getUsers() {
+		return users;
+	}
+
+
+	public void setUsers(List<String> users) {
+		this.users = users;
+	}
+
+
+	public long getMinutes() {
+		return minutes;
+	}
+
+
+	public void setMinutes(long minutes) {
+		this.minutes = minutes;
 	}
 }
