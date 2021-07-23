@@ -226,8 +226,10 @@ public class UserResource{
 		
 		Email from = new Email("HelpinHand@fullstop.website");
 
-		Email to = new Email("fullstophh@gmail.com"); //change to mailTo
-
+//		Email to = new Email("fullstophh@gmail.com"); //change to mailTo
+		
+		Email to = new Email(mailTo);
+		
 		Mail mail = new Mail();
 		mail.setFrom(from);
 
@@ -236,7 +238,7 @@ public class UserResource{
 		
 		Personalization personalization = new Personalization();
 //		personalization.addDynamicTemplateData("username", username);
-		personalization.addDynamicTemplateData("url", "http://localhost:3000/reset-pwd/"+jwt);
+		personalization.addDynamicTemplateData("url", "http://localhost:3000/reset-password/"+jwt);
 //		personalization.addDynamicTemplateData("url", "http://www.google.com");
 		personalization.addTo(to);
 		
@@ -1387,7 +1389,7 @@ public class UserResource{
 		
 		
 		
-		LOG.warning("Doing list activities");
+		LOG.warning("Doing list users");
 		
 		try {
 

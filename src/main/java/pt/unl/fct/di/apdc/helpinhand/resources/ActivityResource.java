@@ -237,57 +237,7 @@ public class ActivityResource {
 		
 	}
 
-	
-	@Authorize
-	@GET
-	@Path("/createdBy")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doCreatedBy(@QueryParam("username") String username) {
 
-		Transaction txn = datastore.newTransaction();
-		
-		
-		try {
-			
-			
-
-			
-			
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("CreatedActivityBy")
-					.setFilter(
-//							CompositeFilter.and(
-//									)
-//							)
-							PropertyFilter.hasAncestor(datastore.newKeyFactory().setKind("User").newKey(username))
-//							PropertyFilter.eq("created_by", username)
-							)
-					.build();
-			
-			
-			QueryResults<Entity> createdBy = datastore.run(query);
-			List<String> activities = new ArrayList<>();
-			
-			createdBy.forEachRemaining(activity ->{
-				activities.add(activity.getString("activity_title"));
-			});
-			
-			
-			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(activities)).build();
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-		
-	}
 	
 	
 //	private LocalDateTime getTime(String time) {
@@ -328,8 +278,8 @@ public class ActivityResource {
 	private Timestamp toTimestamp(String date) {
 		Date timestamp = null;
 		try {
-			timestamp = new SimpleDateFormat("yyyy-MM-dd").parse(date);
-			
+			timestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(date);
+
 		}catch(ParseException e) {
 			e.printStackTrace();
 		}
@@ -391,7 +341,7 @@ public class ActivityResource {
 					.set("activity_participants", participants)
 					.build();
 			
-			Timestamp date = toTimestamp(activityEntity.getString("activity_date"));
+			Timestamp date = toTimestamp(activityEntity.getString("activity_date")+"T"+activityEntity.getString("activity_endHour")+":00"+"Z");
 			
 			joinedEntity = Entity.newBuilder(joinKey)
 					.set("activity_ID", activityID)
@@ -1004,183 +954,8 @@ public class ActivityResource {
 	
 
 
-	@Authorize
-	@GET
-	@Path("/listJoinedActivities")
-//	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetJoinedActivities(@Context HttpHeaders header) {
-		
-		String username = getUsername(header); 
-		
-		Transaction txn = datastore.newTransaction();
-		
 
-		
-		try {
 
-			
-
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("UserJoinedActivity")
-					.setFilter(
-							PropertyFilter.eq("user", username))
-					.build();
-
-			
-			QueryResults<Entity> createdQuery = datastore.run(query);
-			
-			List<ActivitiesData> activities = new ArrayList<>();
-			
-			createdQuery.forEachRemaining(activity -> {
-				ActivitiesData newAct = new ActivitiesData();
-				newAct.setID(activity.getString("activity_ID"));
-				newAct.setTitle(activity.getString("activity_title"));
-				newAct.setActivityOwner(activity.getString("owner"));
-				newAct.setActivityTime(activity.getLong("activity_time"));
-				newAct.setDate(activity.getTimestamp("activity_date").toString()); //added
-				
-				activities.add(newAct);
-			});
-			
-			
-			
-			
-			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(activities)).build();
-			
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-		
-	}
-	
-	
-	
-	@Authorize
-	@GET
-	@Path("/listCreatedActivities")
-//	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetCreatedActivities(@Context HttpHeaders header) {
-		
-		String username = getUsername(header);
-		
-		Transaction txn = datastore.newTransaction();
-		
-
-		
-		
-		try {
-
-			
-
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("CreatedActivityBy")
-					.setFilter(
-							PropertyFilter.eq("created_by", username))
-					.build();
-
-			
-			QueryResults<Entity> createdQuery = datastore.run(query);
-			
-			List<ActivitiesData> activities = new ArrayList<>();
-			
-			createdQuery.forEachRemaining(activity -> {
-				ActivitiesData newAct = new ActivitiesData();
-				newAct.setID(activity.getString("activity_ID"));
-				newAct.setTitle(activity.getString("activity_title"));
-				
-				activities.add(newAct);
-			});
-			
-			
-			
-			
-			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(activities)).build();
-			
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-	}	
-
-	@Authorize
-	@GET
-	@Path("/listPastActivities/{activityID}/{activityOwner}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetPastActivities(@Context HttpHeaders header) {
-		
-		String username = getUsername(header); 
-		
-		Transaction txn = datastore.newTransaction();
-		
-
-		
-		try {
-
-			Calendar cal = Calendar.getInstance();
-			
-			Timestamp today = Timestamp.of(cal.getTime());
-
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("UserJoinedActivity")
-					.setFilter(
-							CompositeFilter.and(PropertyFilter.eq("user", username), 
-									PropertyFilter.le	("activity_date", today))
-							
-							)
-					.build();
-
-			
-			QueryResults<Entity> createdQuery = datastore.run(query);
-			
-			List<ActivitiesData> activities = new ArrayList<>();
-			
-			createdQuery.forEachRemaining(activity -> {
-				ActivitiesData newAct = new ActivitiesData();
-				newAct.setID(activity.getString("activity_ID"));
-				newAct.setTitle(activity.getString("activity_title"));
-				newAct.setActivityOwner(activity.getString("owner"));
-				newAct.setActivityTime(activity.getLong("activity_time"));
-				
-				activities.add(newAct);
-			});
-			
-			
-			
-			
-			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(activities)).build();
-			
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-	}
 	
 	
 	@Authorize
@@ -1269,4 +1044,438 @@ public class ActivityResource {
 			}
 		}
 	}
+	
+	
+	//-------------------------------3 listagens
+	
+	
+	@Authorize
+	@POST
+	@Path("/listCreatedActivities")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doCreatedBy(@QueryParam("username") String username, String startCursorString) {
+
+		Transaction txn = datastore.newTransaction();
+		
+		int pageSize;
+		
+		Cursor startCursor = null;
+		
+		if(startCursorString !=null && !startCursorString.equals("")) {
+			startCursor = Cursor.fromUrlSafe(startCursorString);
+		}
+		
+		
+		
+		LOG.warning("Doing list created activities");
+		
+		try {
+			
+			pageSize = 6;
+
+			
+			
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("CreatedActivityBy")
+					.setFilter(
+//							CompositeFilter.and(
+//									)
+//							)
+							PropertyFilter.hasAncestor(datastore.newKeyFactory().setKind("User").newKey(username))
+//							PropertyFilter.eq("created_by", username)
+							)
+					.setLimit(pageSize)
+					.setStartCursor(startCursor)
+					.build();
+			
+			
+			QueryResults<Entity> createdBy = datastore.run(query);
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdBy.forEachRemaining(activity ->{
+//				activities.add(activity.getString("activity_ID"));
+//				activities.add(activity.getString("activity_title"));
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				
+				activities.add(newAct);
+			});
+			
+			
+			Cursor cursor = createdBy.getCursorAfter();
+			
+			String cursorString = null;
+			
+			if(cursor!=null) {
+				cursorString = cursor.toUrlSafe();
+			}
+////			
+			
+			RequestData data = new RequestData(activities, cursorString);
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(data)).build();
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
+	
+	@Authorize
+	@POST
+	@Path("/listPastActivities")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetPastActivities(@QueryParam("username") String username, String startCursorString) {
+		
+//		String username = getUsername(header); 
+		
+		Transaction txn = datastore.newTransaction();
+		int pageSize;
+		
+		Cursor startCursor = null;
+		
+		if(startCursorString !=null && !startCursorString.equals("")) {
+			startCursor = Cursor.fromUrlSafe(startCursorString);
+		}
+		
+		
+		
+		LOG.warning("Doing list past activities");
+//		LOG.warning(toTimestamp("2010-10-01T22:22:00Z").toString());
+		
+		try {
+
+			pageSize = 6;
+			
+			Calendar cal = Calendar.getInstance();
+			
+			Timestamp today = Timestamp.of(cal.getTime());
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							CompositeFilter.and(PropertyFilter.eq("user", username), 
+									PropertyFilter.le	("activity_date", today))
+							
+							)
+					.setLimit(pageSize)
+					.setStartCursor(startCursor)
+					.build();
+
+			
+			
+			QueryResults<Entity> createdQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdQuery.forEachRemaining(activity -> {
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				newAct.setActivityOwner(activity.getString("owner"));
+				newAct.setActivityTime(activity.getLong("activity_time"));
+				
+				activities.add(newAct);
+			});
+			
+			Cursor cursor = createdQuery.getCursorAfter();
+			
+			String cursorString = null;
+			
+			if(cursor!=null) {
+				cursorString = cursor.toUrlSafe();
+			}
+////			
+			
+			RequestData data = new RequestData(activities, cursorString);
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(data)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
+
+	
+	@Authorize
+	@POST
+	@Path("/listJoinedActivities")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetJoinedActivities(@QueryParam("username") String username, String startCursorString) {
+		
+//		String username = getUsername(header); 
+		
+		Transaction txn = datastore.newTransaction();
+		
+		int pageSize;
+		Cursor startCursor = null;
+		
+		if(startCursorString !=null && !startCursorString.equals("")) {
+			startCursor = Cursor.fromUrlSafe(startCursorString);
+		}
+		
+		
+		LOG.warning("Doing list joined activities");
+		
+		try {
+
+			pageSize = 6;
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							PropertyFilter.eq("user", username))
+					.setLimit(pageSize)
+					.setStartCursor(startCursor)
+					.build();
+
+			
+			QueryResults<Entity> createdQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdQuery.forEachRemaining(activity -> {
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				newAct.setActivityOwner(activity.getString("owner"));
+				newAct.setActivityTime(activity.getLong("activity_time"));
+				newAct.setDate(activity.getTimestamp("activity_date").toString()); //added
+				
+				activities.add(newAct);
+			});
+			
+			Cursor cursor = createdQuery.getCursorAfter();
+			
+			String cursorString = null;
+			
+			if(cursor!=null) {
+				cursorString = cursor.toUrlSafe();
+			}
+			
+			RequestData data = new RequestData(activities, cursorString);
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(data)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
+	
+	
+	
+	
+	
+//	@Authorize
+//	@GET
+//	@Path("/listCreatedActivities")
+////	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetCreatedActivities(@Context HttpHeaders header) {
+//		
+//		String username = getUsername(header);
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//
+//		
+//		
+//		try {
+//
+//			
+//
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("CreatedActivityBy")
+//					.setFilter(
+//							PropertyFilter.eq("created_by", username))
+//					.build();
+//
+//			
+//			QueryResults<Entity> createdQuery = datastore.run(query);
+//			
+//			List<ActivitiesData> activities = new ArrayList<>();
+//			
+//			createdQuery.forEachRemaining(activity -> {
+//				ActivitiesData newAct = new ActivitiesData();
+//				newAct.setID(activity.getString("activity_ID"));
+//				newAct.setTitle(activity.getString("activity_title"));
+//				
+//				activities.add(newAct);
+//			});
+//			
+//			
+//			
+//			
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}	
+
+	
+	
+	
+//	@Authorize
+//	@GET
+//	@Path("/listJoinedActivities")
+////	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetJoinedActivities(@Context HttpHeaders header) {
+//		
+//		String username = getUsername(header); 
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//
+//		
+//		try {
+//
+//			
+//
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("UserJoinedActivity")
+//					.setFilter(
+//							PropertyFilter.eq("user", username))
+//					.build();
+//
+//			
+//			QueryResults<Entity> createdQuery = datastore.run(query);
+//			
+//			List<ActivitiesData> activities = new ArrayList<>();
+//			
+//			createdQuery.forEachRemaining(activity -> {
+//				ActivitiesData newAct = new ActivitiesData();
+//				newAct.setID(activity.getString("activity_ID"));
+//				newAct.setTitle(activity.getString("activity_title"));
+//				newAct.setActivityOwner(activity.getString("owner"));
+//				newAct.setActivityTime(activity.getLong("activity_time"));
+//				newAct.setDate(activity.getTimestamp("activity_date").toString()); //added
+//				
+//				activities.add(newAct);
+//			});
+//			
+//			
+//			
+//			
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//		
+//	}
+	
+	
+//	@Authorize
+//	@GET
+//	@Path("/listPastActivities")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doGetPastActivities(@Context HttpHeaders header) {
+//		
+//		String username = getUsername(header); 
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//
+//		
+//		try {
+//
+//			Calendar cal = Calendar.getInstance();
+//			
+//			Timestamp today = Timestamp.of(cal.getTime());
+//
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("UserJoinedActivity")
+//					.setFilter(
+//							CompositeFilter.and(PropertyFilter.eq("user", username), 
+//									PropertyFilter.le	("activity_date", today))
+//							
+//							)
+//					.build();
+//
+//			
+//			QueryResults<Entity> createdQuery = datastore.run(query);
+//			
+//			List<ActivitiesData> activities = new ArrayList<>();
+//			
+//			createdQuery.forEachRemaining(activity -> {
+//				ActivitiesData newAct = new ActivitiesData();
+//				newAct.setID(activity.getString("activity_ID"));
+//				newAct.setTitle(activity.getString("activity_title"));
+//				newAct.setActivityOwner(activity.getString("owner"));
+//				newAct.setActivityTime(activity.getLong("activity_time"));
+//				
+//				activities.add(newAct);
+//			});
+//			
+//			
+//			
+//			
+//			txn.commit();
+//			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
 }
