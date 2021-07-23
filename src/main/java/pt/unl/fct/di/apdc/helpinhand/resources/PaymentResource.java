@@ -42,6 +42,8 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 
 
 @Path("/")
@@ -51,6 +53,8 @@ public class PaymentResource {
 	
 	
 	private static final Logger LOG = Logger.getLogger(PaymentResource.class.getName());
+	
+	private static final String STRIPE_API_KEY="sk_test_51JCXBCJs2li8rk8icagz797P5REq00LTg6EJj1SUPzcvP0VxU69o0aTpHT0J7JGzJL8V1hCjUnnVNgP0cu5ya2N9006Tni60dc";
 	
 	private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 	
@@ -188,7 +192,11 @@ public class PaymentResource {
 //					return Response.status(Status.FORBIDDEN).build();
 //				}
 //				
-				Stripe.apiKey = "sk_test_51JCXBCJs2li8rk8icagz797P5REq00LTg6EJj1SUPzcvP0VxU69o0aTpHT0J7JGzJL8V1hCjUnnVNgP0cu5ya2N9006Tni60dc";
+//				Dotenv dotenv = Dotenv.load();
+//
+//				String STRIPE_API_KEY = dotenv.get("STRIPE_API_KEY");
+				Stripe.apiKey = STRIPE_API_KEY;
+//				Stripe.apiKey = "sk_test_51JCXBCJs2li8rk8icagz797P5REq00LTg6EJj1SUPzcvP0VxU69o0aTpHT0J7JGzJL8V1hCjUnnVNgP0cu5ya2N9006Tni60dc";
 				
 				SessionCreateParams params = 
 						SessionCreateParams.builder().addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)

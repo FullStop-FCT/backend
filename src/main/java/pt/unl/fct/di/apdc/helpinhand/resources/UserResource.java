@@ -61,6 +61,7 @@ import com.sendgrid.helpers.mail.objects.OpenTrackingSetting;
 import com.sendgrid.helpers.mail.objects.Personalization;
 import com.sendgrid.helpers.mail.objects.TrackingSettings;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
 import pt.unl.fct.di.apdc.helpinhand.api.Authorize;
 import pt.unl.fct.di.apdc.helpinhand.api.PasswordChanger;
@@ -116,6 +117,9 @@ public class UserResource{
 	
 
 	private static final Logger LOG = Logger.getLogger(UserResource.class.getName());
+	
+	private static final String SENDGRID_API_KEY="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";
+	private static final String SECRET="f7b038a6-f515-4516-93f0-ffa59c7fd00e";
 	
 	
 	private static final DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
@@ -178,7 +182,11 @@ public class UserResource{
 				Date now = new Date(System.currentTimeMillis());
 				Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
 				
-				Algorithm algorithm = Algorithm.HMAC512("secret");
+//				Dotenv dotenv = Dotenv.load();
+//
+//				String secret = dotenv.get("SECRET");
+				
+				Algorithm algorithm = Algorithm.HMAC512(SECRET);
 				String jwtToken = JWT.create()
 						.withClaim("role", userEntity.getString("user_role"))
 						.withClaim("image", userEntity.getString("user_image"))
@@ -271,11 +279,15 @@ public class UserResource{
 	    replyTo.setEmail("hxp@fullstop.website");
 	    mail.setReplyTo(replyTo);
 		
-		String SENDGRID_API_KEY="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";
+//		String SENDGRID_API_KEY="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";
+//			 
+//			 
+	    
+//		Dotenv dotenv = Dotenv.load();
+//		String SENDGRID_API_KEY = dotenv.get("SENDGRID_API_KEY");
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);	
 			 
-			 
-			 
-		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+//		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
 		Request request = new Request();
 		try {
 			request.setMethod(Method.POST);
@@ -331,7 +343,12 @@ public class UserResource{
 			Date now = new Date(System.currentTimeMillis());
 			Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
 			
-			Algorithm algorithm = Algorithm.HMAC512("secret");
+			
+//			Dotenv dotenv = Dotenv.load();
+//
+//			String secret = dotenv.get("SECRET");
+			
+			Algorithm algorithm = Algorithm.HMAC512(SECRET);
 			String jwtToken = JWT.create()
 					.withClaim("role", userEntity.getString("user_role"))
 					.withClaim("image", userEntity.getString("user_image"))
@@ -433,10 +450,14 @@ public class UserResource{
 	
 	private String createMarketingList(String orgName) {
 		
-		String SENDGRID_API_KEY="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";
+//		String SENDGRID_API_KEY="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";
+//		
+//		
+//		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
 		
-		
-		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+//		Dotenv dotenv = Dotenv.load();
+//		String SENDGRID_API_KEY = dotenv.get("SENDGRID_API_KEY");
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);	
 		
 		Request request = new Request();
 		
@@ -544,11 +565,13 @@ public class UserResource{
 	    replyTo.setEmail("hxp@fullstop.website");
 	    mail.setReplyTo(replyTo);
 		
-		String SENDGRID_API_KEY="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";
+//		String SENDGRID_API_KEY="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";
 			 
+//		Dotenv dotenv = Dotenv.load();
+//		String SENDGRID_API_KEY = dotenv.get("SENDGRID_API_KEY");
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);	 
 			 
-			 
-		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+//		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
 		Request request = new Request();
 		try {
 			request.setMethod(Method.POST);
@@ -685,7 +708,7 @@ public class UserResource{
 		.set("user_following", LongValue.newBuilder(0).build()) //followed orgs //LONG incrementar e decrementar metodo
 		.set("created_activities", LongValue.newBuilder(0).build())
 		.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
-		.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
+		.set("user_state", StringValue.newBuilder(State.DISABLED.toString()).setExcludeFromIndexes(true).build())
 		.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
 		.set("user_creation_time", Timestamp.now())
 		.set("last_time_modified", Timestamp.now())
@@ -1122,10 +1145,14 @@ public class UserResource{
 	
 	private void addContact(String listID, String userEmail) {
 		
-		String SENDGRID_API_KEY="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";
+//		String SENDGRID_API_KEY="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";
 		
 		
+//		Dotenv dotenv = Dotenv.load();
+//		String key = dotenv.get("SENDGRID_API_KEY");
 		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+		
+//		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
 		
 		Request request = new Request();
 		
@@ -1226,7 +1253,7 @@ public class UserResource{
 			txn.add(followEntity);
 			
 			
-//			addContact(targetEntity.getString("contact_list_id"),selfEntity.getString("user_email"));
+			addContact(targetEntity.getString("contact_list_id"),selfEntity.getString("user_email"));
 			
 		
 			txn.commit();
@@ -1462,20 +1489,93 @@ public class UserResource{
 	}
 	
 	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/test123")
+	public Response test123(String userEmail) {
+		return Response.ok().entity(getContactID(userEmail)).build();
+	}
+	
+	
+	private String getContactID(String userEmail) {
+//		Dotenv dotenv = Dotenv.load();
+//		String key = dotenv.get("SENDGRID_API_KEY");
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+		Request request = new Request();
+		
+		
+		
+		
+		String id="";
+		
+		try {
+			
+			request.setMethod(Method.POST);
+			request.setEndpoint("/marketing/contacts/search/emails");
+			request.addQueryParam("contact_ids", userEmail);
+			request.setBody("{\"emails\":[\""+userEmail+"\"]}");
+			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
+			
+			
+			
+//			System.out.println(json.toString());
+//			name = json.getString("name");
+			
+			
+			com.sendgrid.Response response = sg.api(request);
+//			System.out.println("BODY:    " +response.getBody());		
+			JSONObject json = new JSONObject(response.getBody());
+//			System.out.println(json	);
+
+			id=json.getJSONObject("result").getJSONObject(userEmail).getJSONObject("contact").getString("id");
+			
+			System.out.println(id);
+			
+//			JSONObject jsonresult = new JSONObject(json.get("result"));
+//			System.out.println(jsonresult);
+//			JSONObject jsonmail = new JSONObject(jsonresult.get("contact"));
+//			System.out.println(jsonmail.get("contact"));
+//			JSONObject json4 = new JSONObject(jsonmail.getString("contact"));
+//			System.out.println(json4.getString("id"));
+			//JSONObject contact = new JSONObject(json.getString(userEmail));
+//			contact = json.getString("contact");
+			//id=contact.getString("id");
+			
+			System.out.println(response.getStatusCode());
+			System.out.println(response.getBody());
+			System.out.println(response.getHeaders());
+			
+			
+		}catch(Exception ex) {
+			LOG.warning(ex.getMessage());
+		}
+		return id;
+	}
+	
 	
 	private void removeContact(String listID, String userEmail) {
 			
-		String SENDGRID_API_KEY="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";
+//		String SENDGRID_API_KEY="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";
 		
+		
+//		Dotenv dotenv = Dotenv.load();
+		
+		
+//		String key = System.getenv("SENDGRID_API_KEY");
+//		String key = dotenv.get("SENDGRID_API_KEY");
 		
 		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+//		LOG.info(key);
 		
 		Request request = new Request();
 		
+		String contactID = getContactID(userEmail);
+		LOG.warning(contactID);
 		try {
-			request.setMethod(Method.PUT);
-			request.setEndpoint("/marketing/contacts");
-			request.setBody("{\"list_ids\":[\""+listID+"\"],\"contacts\":[{\"email\":\""+userEmail+"\"}]}");
+			request.setMethod(Method.DELETE);
+			request.setEndpoint("/marketing/lists/"+listID+"/contacts");
+			request.addQueryParam("contact_ids", contactID);
+			request.setBody("{}");
 			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
 			
 			com.sendgrid.Response response = sg.api(request);
@@ -1555,6 +1655,8 @@ public class UserResource{
 //				.build();
 		
 		txn.delete(followKey);
+		
+		removeContact(targetEntity.getString("contact_list_id"),selfEntity.getString("user_email"));
 		
 		txn.commit();
 		return Response.ok(" {} ").build();

@@ -39,12 +39,12 @@ public class Database {
 		return userKey;
 	}
 	
-	public Key getOrgKey(String username) {
-		Key orgKey = datastore.newKeyFactory()
-				.setKind("Organization")
-				.newKey(username);
-		return orgKey;
-	}
+//	public Key getOrgKey(String username) {
+//		Key orgKey = datastore.newKeyFactory()
+//				.setKind("Organization")
+//				.newKey(username);
+//		return orgKey;
+//	}
 	
 	
 //	public Key getOrgKey(String nif) {
@@ -55,15 +55,15 @@ public class Database {
 //	}
 	
 	
-	public Key getTokenKey(AuthToken token) {
-		Key tokenKey = datastore.newKeyFactory()
-				.addAncestor(PathElement.of("User", token.getUsername()))
-				.setKind("Token")
-				.newKey(token.getTokenID());
-		
-		return tokenKey;
-	}
-	
+//	public Key getTokenKey(AuthToken token) {
+//		Key tokenKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("User", token.getUsername()))
+//				.setKind("Token")
+//				.newKey(token.getTokenID());
+//		
+//		return tokenKey;
+//	}
+//	
 	
 	public Key getActivityKey(ActivitiesData data) {
 		Key activityKey = datastore.allocateId(datastore.newKeyFactory()
@@ -75,13 +75,13 @@ public class Database {
 	}
 	
 	
-	public Key getRouteKey() {
-		Key routesKey = datastore.allocateId(datastore.newKeyFactory()
-				.setKind("Route")
-				.newKey());
-		
-		return routesKey;
-	}
+//	public Key getRouteKey() {
+//		Key routesKey = datastore.allocateId(datastore.newKeyFactory()
+//				.setKind("Route")
+//				.newKey());
+//		
+//		return routesKey;
+//	}
 //	
 //	public Result<String> doRegister(User userData) throws WebApplicationException{
 //		

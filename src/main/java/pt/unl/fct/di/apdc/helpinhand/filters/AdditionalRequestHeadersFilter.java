@@ -13,6 +13,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import pt.unl.fct.di.apdc.helpinhand.api.Authorize;
 
 
@@ -23,6 +24,7 @@ public class AdditionalRequestHeadersFilter implements ContainerRequestFilter {
 	public AdditionalRequestHeadersFilter() {}
 	
 	private static final Logger LOG = Logger.getLogger(AdditionalRequestHeadersFilter.class.getName());
+	private static final String SECRET="f7b038a6-f515-4516-93f0-ffa59c7fd00e";
 	
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -53,7 +55,11 @@ public class AdditionalRequestHeadersFilter implements ContainerRequestFilter {
         		String issuer = jwtDecoded.getIssuer();
 //        		LOG.warning("user: " + issuer);
         		
-        		Algorithm algorithm = Algorithm.HMAC512("secret");
+//        		Dotenv dotenv = Dotenv.load();
+//
+//				String secret = dotenv.get("SECRET");
+        		
+        		Algorithm algorithm = Algorithm.HMAC512(SECRET);
         		JWTVerifier verifier = JWT.require(algorithm)
         				.withIssuer(issuer)
         				.build();

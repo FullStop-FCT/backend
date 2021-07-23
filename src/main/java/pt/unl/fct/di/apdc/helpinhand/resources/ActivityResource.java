@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
@@ -27,6 +28,10 @@ import javax.ws.rs.core.Response.Status;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.appengine.api.taskqueue.TaskQueuePb.TaskQueueQueryAndOwnTasksResponse;
 import com.google.appengine.repackaged.com.google.common.collect.Iterators;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Cursor;
@@ -69,6 +74,9 @@ public class ActivityResource {
 	
 	private static final DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 	public String timestamp;
+	/**
+	 * 
+	 */
 	private final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 	
 	private final Gson g = new Gson();
@@ -306,7 +314,7 @@ public class ActivityResource {
 		
 		
 			Key joinKey = datastore.newKeyFactory()
-					.addAncestors(PathElement.of("User", username), PathElement.of("Activity", activityID))
+					.addAncestors(PathElement.of("User", activityOwner), PathElement.of("Activity", activityID)) //alterado user para activityOwner
 					.setKind("UserJoinedActivity")
 					.newKey(username);
 			
@@ -396,7 +404,8 @@ public class ActivityResource {
 		Query<Entity> query = Query.newEntityQueryBuilder()
 				.setKind("UserJoinedActivity")
 				.setFilter(CompositeFilter.and(
-						PropertyFilter.hasAncestor(factory.setKind("User").newKey(username)),
+//						PropertyFilter.hasAncestor(factory.setKind("User").newKey(username)),
+						PropertyFilter.eq("user", username), //alterado
 						PropertyFilter.eq("activity_ID", activityID)
 //						PropertyFilter.eq("user", username)
 						))
@@ -447,7 +456,7 @@ public class ActivityResource {
 
 		
 			Key joinKey = datastore.newKeyFactory()
-					.addAncestors(PathElement.of("User", username), PathElement.of("Activity", activityID))
+					.addAncestors(PathElement.of("User", activityOwner), PathElement.of("Activity", activityID)) //alterado para activityOwner
 					.setKind("UserJoinedActivity")
 					.newKey(username);
 			
@@ -1005,6 +1014,88 @@ public class ActivityResource {
 		}
 	}
 	
+//	
+//	@Authorize
+//	@POST
+//	@Path("/compute/{activityID}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+////	@Produces(MediaType.APPLICATION_JSON)
+//	public Response triggerExecuteComputeTask(@PathParam("activityID") String activityID) {
+//		Queue queue = QueueFactory.getDefaultQueue();
+//		
+//		String url="/rest/activities/computeAddHours";
+//		
+////		queue.add(TaskOptions.Builder.withUrl("/rest/activities/computeAddHours/"+activityID+"/"+minutes).);
+//		queue.add(TaskOptions.Builder.withUrl(url).header("data", activityID));
+//		LOG.warning("hello?");
+//		return Response.ok().build();
+//	}
+//	  
+//	@POST
+//	@Path("/computeAddHours")
+//	@Consumes(MediaType.APPLICATION_JSON)
+////	@Produces(MediaType.APPLICATION_JSON)
+//	public Response executeComputeTask(@Context HttpHeaders header) {
+////	public Response executeComputeTask() {
+//		LOG.warning("Starting to execute computation tasks");
+//		Transaction txn = datastore.newTransaction();
+//
+//		try {
+//			
+//			
+//		
+////			String activityID="d156ef4a-a378-4143-9c53-8702868e1cac";
+//			String activityID=header.getHeaderString("data");
+//			String minutes="10";
+//			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("UserJoinedActivity")
+//					.setFilter(
+//							PropertyFilter.eq("activity_ID", activityID))
+//					.build();
+//			
+//			QueryResults<Entity> results = datastore.run(query);
+//			
+//			List<String> users = new ArrayList<>();
+//			
+//			
+//			results.forEachRemaining(result-> {
+//				
+//				String newUser = result.getString("user");
+//						
+//				users.add(newUser);
+//			});
+//			
+////			String minutes="5";
+//			
+//			users.forEach(user->{
+//				Key userKey = database.getUserKey(user);
+//				Entity userEntity = txn.get(userKey);
+//				if(userEntity!=null) {
+//					long hours = userEntity.getLong("user_hours")+Long.valueOf(minutes);
+//					userEntity = Entity.newBuilder(userEntity)
+//							.set("user_hours", hours)
+//							.build();
+//					txn.update(userEntity);
+//					LOG.warning("Points added to User : " + user);
+//				}
+//			});
+//			
+//
+////			Thread.sleep(1000 * 60);
+//		} catch (Exception e) {
+//			LOG.logp(Level.SEVERE, this.getClass().getCanonicalName(), "executeComputeTask", "An exception has ocurred", e);
+//			txn.rollback();
+//			return Response.serverError().build();
+//		} //Simulates 5m execution
+//		
+//		
+//		txn.commit();
+//		return Response.ok().build();
+//	}
+	
+	
+	
 	@Authorize
 	@POST
 	@Path("/addhours")
@@ -1418,64 +1509,64 @@ public class ActivityResource {
 //	}
 	
 	
-//	@Authorize
-//	@GET
-//	@Path("/listPastActivities")
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public Response doGetPastActivities(@Context HttpHeaders header) {
-//		
-//		String username = getUsername(header); 
-//		
-//		Transaction txn = datastore.newTransaction();
-//		
-//
-//		
-//		try {
-//
-//			Calendar cal = Calendar.getInstance();
-//			
-//			Timestamp today = Timestamp.of(cal.getTime());
-//
-//			Query<Entity> query = Query.newEntityQueryBuilder()
-//					.setKind("UserJoinedActivity")
-//					.setFilter(
-//							CompositeFilter.and(PropertyFilter.eq("user", username), 
-//									PropertyFilter.le	("activity_date", today))
-//							
-//							)
-//					.build();
-//
-//			
-//			QueryResults<Entity> createdQuery = datastore.run(query);
-//			
-//			List<ActivitiesData> activities = new ArrayList<>();
-//			
-//			createdQuery.forEachRemaining(activity -> {
-//				ActivitiesData newAct = new ActivitiesData();
-//				newAct.setID(activity.getString("activity_ID"));
-//				newAct.setTitle(activity.getString("activity_title"));
-//				newAct.setActivityOwner(activity.getString("owner"));
-//				newAct.setActivityTime(activity.getLong("activity_time"));
-//				
-//				activities.add(newAct);
-//			});
-//			
-//			
-//			
-//			
-//			txn.commit();
-//			return Response.status(Status.OK).entity(g.toJson(activities)).build();
-//			
-//		}catch(Exception e) {
-//			txn.rollback();
-//			LOG.warning("exception "+ e.toString());
-//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-//		}finally {
-//			if(txn.isActive()) {
-//				txn.rollback();
-//				LOG.warning("entered finally");
-//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-//			}
-//		}
-//	}
+	@Authorize
+	@GET
+	@Path("/listCertificateActivities")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetCertificateActivities(@Context HttpHeaders header) {
+		
+		String username = getUsername(header); 
+		
+		Transaction txn = datastore.newTransaction();
+		
+
+		
+		try {
+
+			Calendar cal = Calendar.getInstance();
+			
+			Timestamp today = Timestamp.of(cal.getTime());
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							CompositeFilter.and(PropertyFilter.eq("user", username), 
+									PropertyFilter.le	("activity_date", today))
+							
+							)
+					.build();
+
+			
+			QueryResults<Entity> createdQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdQuery.forEachRemaining(activity -> {
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				newAct.setActivityOwner(activity.getString("owner"));
+				newAct.setActivityTime(activity.getLong("activity_time"));
+				
+				activities.add(newAct);
+			});
+			
+			
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
 }

@@ -39,6 +39,7 @@ import com.google.cloud.datastore.StructuredQuery;
 import com.google.cloud.datastore.Transaction;
 import com.google.gson.Gson;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
 import pt.unl.fct.di.apdc.helpinhand.api.RequestData;
 
@@ -50,6 +51,8 @@ public class AuthenticationResource {
 
 	
 	private static final Logger LOG = Logger.getLogger(AuthenticationResource.class.getName());
+	
+	private static final String SECRET="f7b038a6-f515-4516-93f0-ffa59c7fd00e";
 	
 	private final Gson g = new Gson();
 	
@@ -86,7 +89,7 @@ public class AuthenticationResource {
 				if(user == null) {
 					txn.rollback();
 					LOG.warning("Failed login attempt");
-					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+					return Response.status(Status.FORBIDDEN).entity("inputerror").build();
 				}
 				
 				if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED")) {
@@ -117,7 +120,11 @@ public class AuthenticationResource {
 					Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
 
 					
-					Algorithm algorithm = Algorithm.HMAC512("secret");
+//					Dotenv dotenv = Dotenv.load();
+//
+//					String secret = dotenv.get("SECRET");
+					
+					Algorithm algorithm = Algorithm.HMAC512(SECRET);
 					String jwtToken = JWT.create()
 							.withClaim("role", user.getString("user_role"))
 							.withClaim("image", user.getString("user_image"))
@@ -147,7 +154,7 @@ public class AuthenticationResource {
 				else {
 					txn.rollback();
 					LOG.warning("Wrong password for username: " + request.getUsername());
-					return Response.status(Status.FORBIDDEN).entity("Wrong password or username").build();
+					return Response.status(Status.FORBIDDEN).entity("inputerror").build();
 				}
 			}catch(Exception e) {
 				txn.rollback();
@@ -203,7 +210,7 @@ public class AuthenticationResource {
 					Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
 
 					
-					Algorithm algorithm = Algorithm.HMAC512("secret");
+					Algorithm algorithm = Algorithm.HMAC512(SECRET);
 					String jwtToken = JWT.create()
 							.withClaim("role", staff.getString("staff_role"))
 							.withIssuedAt(now)
