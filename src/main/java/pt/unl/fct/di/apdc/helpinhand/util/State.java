@@ -4,5 +4,5 @@ public enum State {
 	ENABLED,
 	DISABLED,
 	DELETED,
-	QUARENTINE
+	SUSPENDED
 }

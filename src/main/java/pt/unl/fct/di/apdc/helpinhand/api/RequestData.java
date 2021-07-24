@@ -7,10 +7,10 @@ import com.google.cloud.datastore.Cursor;
 public class RequestData {
 
 	
-	private AuthToken token;
+//	private AuthToken token;
 	private UsersData userData;
 	private ActivitiesData activityData;
-	private RoutesData routeData;
+//	private RoutesData routeData;
 	
 	private String userToDelete;
 	private String userToChange;
@@ -29,29 +29,29 @@ public class RequestData {
 	private String cursorString;
 	
 	private List<String> users;
-	private long minutes;
+//	private long minutes;
 	
 	public RequestData() {
 		
 	}
 	
-	
-	public RequestData(List<String> users , long minutes) {
-		this.users=users;
-		this.minutes = minutes;
-	}
+//	
+//	public RequestData(List<String> users , long minutes) {
+//		this.users=users;
+//		this.minutes = minutes;
+//	}
 	
 	public RequestData(String username, String password, String confirmation) {
 		this.username=username;
 		this.password=password;
 		this.confirmation=confirmation;
 	}
-	
-	public RequestData(List<?> results ,Cursor cursor) {
-		this.results=results;
-//		this.pageSize=pageSize;
-		this.setCursor(cursor);
-	}
+//	
+//	public RequestData(List<?> results ,Cursor cursor) {
+//		this.results=results;
+////		this.pageSize=pageSize;
+//		this.setCursor(cursor);
+//	}
 	
 	public RequestData(List<?> results ,String cursorString) {
 		this.results=results;
@@ -59,40 +59,40 @@ public class RequestData {
 		this.cursorString=cursorString;
 	}
 	
-	public RequestData(AuthToken token, String userToDelete) {
-		this.token = token;
-		this.userToDelete = userToDelete;
-		//delete
-	}
+//	public RequestData(AuthToken token, String userToDelete) {
+//		this.token = token;
+//		this.userToDelete = userToDelete;
+//		//delete
+//	}
 	
 	public RequestData(String username, String password) {
 		this.username = username;
 		this.password = password;
 	}
 	
-	public RequestData(AuthToken token, UsersData userData) {
-		this.token = token;
-		this.userData = userData;
-		//update
-	}
+//	public RequestData(AuthToken token, UsersData userData) {
+//		this.token = token;
+//		this.userData = userData;
+//		//update
+//	}
 	
 	
-	public RequestData(AuthToken token, ActivitiesData activityData) {
-		this.token=token;
-		this.activityData = activityData;
-	}
-	
-	public RequestData(AuthToken token, RoutesData routeData) {
-		this.token=token;
-		this.setRouteData(routeData);
-	}
-	
-	public RequestData(AuthToken token, String userToChange, String attribute) {
-		this.token = token;
-		this.userToChange = userToChange;
-		this.attribute = attribute;
-		//role and state
-	}
+//	public RequestData(AuthToken token, ActivitiesData activityData) {
+//		this.token=token;
+//		this.activityData = activityData;
+//	}
+//	
+//	public RequestData(AuthToken token, RoutesData routeData) {
+//		this.token=token;
+//		this.setRouteData(routeData);
+//	}
+//	
+//	public RequestData(AuthToken token, String userToChange, String attribute) {
+//		this.token = token;
+//		this.userToChange = userToChange;
+//		this.attribute = attribute;
+//		//role and state
+//	}
 
 	
 	public String getUserToChange() {
@@ -111,13 +111,13 @@ public class RequestData {
 		this.attribute = roleToChange;
 	}
 
-	public AuthToken getToken() {
-		return token;
-	}
-
-	public void setToken(AuthToken token) {
-		this.token = token;
-	}
+//	public AuthToken getToken() {
+//		return token;
+//	}
+//
+//	public void setToken(AuthToken token) {
+//		this.token = token;
+//	}
 
 	public String getUserToDelete() {
 		return userToDelete;
@@ -152,13 +152,7 @@ public class RequestData {
 		this.activityData = activityData;
 	}
 
-	public RoutesData getRouteData() {
-		return routeData;
-	}
 
-	public void setRouteData(RoutesData routeData) {
-		this.routeData = routeData;
-	}
 
 	public void setUsername(String username) {
 		this.username = username;
@@ -209,12 +203,12 @@ public class RequestData {
 	}
 
 
-	public long getMinutes() {
-		return minutes;
-	}
-
-
-	public void setMinutes(long minutes) {
-		this.minutes = minutes;
-	}
+//	public long getMinutes() {
+//		return minutes;
+//	}
+//
+//
+//	public void setMinutes(long minutes) {
+//		this.minutes = minutes;
+//	}
 }

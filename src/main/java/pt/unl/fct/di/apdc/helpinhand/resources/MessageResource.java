@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response.Status;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.cloud.Timestamp;
+import com.google.cloud.datastore.Cursor;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
@@ -35,6 +36,7 @@ import com.google.gson.Gson;
 
 import pt.unl.fct.di.apdc.helpinhand.api.Authorize;
 import pt.unl.fct.di.apdc.helpinhand.api.MessageData;
+import pt.unl.fct.di.apdc.helpinhand.api.RequestData;
 
 @Path("/comments")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
@@ -122,11 +124,36 @@ public class MessageResource {
 	
 	@Authorize
 	@DELETE
-	@Path("/delete")
+	@Path("/delete/{activityID}/{owner}/{msgID}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response doDelete() {
+	public Response doDelete(@PathParam("activityID") String activityID, @PathParam("owner") String owner, @PathParam("msgID") String msgID, @Context HttpHeaders header) {
+		
+		LOG.warning("Attempt to add comment on activity " + msgID);
+		
+		String username = getUsername(header);
+		
+		Transaction txn = datastore.newTransaction();
 		try {
 			
+			Key messageKey = factory
+					.addAncestors(PathElement.of("User",owner ), PathElement.of("Activity", activityID))
+					.setKind("Message")
+					.newKey(Long.valueOf(msgID));
+			
+			Entity messageEntity = txn.get(messageKey);
+			
+//			LOG.warning("we here");
+			
+			if(!username.equals(messageEntity.getString("user")) && !username.equals(messageEntity.getString("owner"))) {
+				txn.rollback();
+				LOG.warning("Cant do that");
+				return Response.status(Status.FORBIDDEN).entity("cantdelete").build();
+			}
+			
+			
+			txn.delete(messageKey);
+			txn.commit();
+			LOG.warning("comment deleted sucessfully");
 
 			return Response.ok(" {} ").build();
 		}catch(Exception e) {
@@ -166,15 +193,27 @@ public class MessageResource {
 	
 	
 	@Authorize
-	@GET
+	@POST
 	@Path("/list/{activityID}/{owner}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response doList(@PathParam("activityID") String activityID, @PathParam("owner") String owner) {
+	public Response doList(@PathParam("activityID") String activityID, @PathParam("owner") String owner, String startCursorString) {
 		LOG.warning("Attempt to list comments on activity " + activityID);
 		
 		Transaction txn = datastore.newTransaction();
+		
+		
+		int pageSize;
+		Cursor startCursor = null;
+		
+		if(startCursorString !=null && !startCursorString.equals("")) {
+			startCursor = Cursor.fromUrlSafe(startCursorString);
+		}
+		
+		
+		
 		try {
 			
+			pageSize = 5;
 
 			Query<Entity> query = Query.newEntityQueryBuilder()
 					.setKind("Message")
@@ -183,6 +222,8 @@ public class MessageResource {
 							)
 						)
 					.setOrderBy(OrderBy.desc("date"))
+					.setLimit(pageSize)
+					.setStartCursor(startCursor)
 					.build();
 			
 			QueryResults<Entity> msgsQuery = datastore.run(query);
@@ -204,8 +245,19 @@ public class MessageResource {
 	
 			});
 			
+			
+			Cursor cursor = msgsQuery.getCursorAfter();
+			
+			String cursorString = null;
+			
+			if(cursor!=null) {
+				cursorString = cursor.toUrlSafe();
+			}
+			
+			RequestData data = new RequestData(messages, cursorString);
+			
 			txn.commit();
-			return Response.status(Status.OK).entity(g.toJson(messages)).build();
+			return Response.status(Status.OK).entity(g.toJson(data)).build();
 //			return Response.ok(" {} ").build();
 		}catch(Exception e) {
 			txn.rollback();

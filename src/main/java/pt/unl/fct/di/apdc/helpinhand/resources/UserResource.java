@@ -27,6 +27,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.client.json.Json;
+import com.google.appengine.api.datastore.AdminDatastoreService.EntityBuilder;
 import com.google.appengine.repackaged.org.apache.commons.codec.digest.DigestUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Cursor;
@@ -394,6 +395,8 @@ public class UserResource{
 		Key userKey = database.getUserKey(getUsername(header));
 		
 		
+		
+		
 		try {
 			
 			Entity userEntity = txn.get(userKey);
@@ -407,7 +410,7 @@ public class UserResource{
 			
 			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
 				txn.rollback();
-				LOG.warning("No such user");
+				LOG.warning("CANT DO THAT");
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
@@ -498,16 +501,16 @@ public class UserResource{
 	
 	
 	//DONT NEED
-	@GET
-	@Path("/gridTest")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doSendGridTest() {
-		
-		LOG.warning("Attempt to confirm signup for user ");
-		createMarketingList("test");
-		return Response.ok(" {} ").build();  
-		
-	}
+//	@GET
+//	@Path("/gridTest")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doSendGridTest() {
+//		
+//		LOG.warning("Attempt to confirm signup for user ");
+//		createMarketingList("test");
+//		return Response.ok(" {} ").build();  
+//		
+//	}
 	
 	
 	private void sendMail(String mailTo, String jwt) {
@@ -669,7 +672,7 @@ public class UserResource{
 		.set("user_following", LongValue.newBuilder(0).build()) //followed orgs //LONG incrementar e decrementar metodo
 		.set("created_activities", LongValue.newBuilder(0).build())
 		.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
-		.set("user_state", StringValue.newBuilder(State.DISABLED.toString()).setExcludeFromIndexes(true).build())
+		.set("user_state", StringValue.newBuilder(State.DISABLED.toString()).build())
 		.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
 		.set("user_creation_time", Timestamp.now())
 		.set("last_time_modified", Timestamp.now())
@@ -708,7 +711,7 @@ public class UserResource{
 		.set("user_following", LongValue.newBuilder(0).build()) //followed orgs //LONG incrementar e decrementar metodo
 		.set("created_activities", LongValue.newBuilder(0).build())
 		.set("user_profile", StringValue.newBuilder(Profile.PUBLIC.toString()).setExcludeFromIndexes(true).build())
-		.set("user_state", StringValue.newBuilder(State.DISABLED.toString()).setExcludeFromIndexes(true).build())
+		.set("user_state", StringValue.newBuilder(State.DISABLED.toString()).build())
 		.set("user_role", StringValue.newBuilder(Roles.USER.toString()).setExcludeFromIndexes(true).build())
 		.set("user_creation_time", Timestamp.now())
 		.set("last_time_modified", Timestamp.now())
@@ -758,7 +761,7 @@ public class UserResource{
 			
 			
 			if(userEntity.getString("user_role").equals(Roles.USER.toString()) && (!userEntity.getString("user_state").equals(State.DELETED.toString()) 
-					|| !userEntity.getString("user_state").equals(State.DISABLED.toString())) ) {
+					&& !userEntity.getString("user_state").equals(State.DISABLED.toString()) && !userEntity.getString("user_state").equals(State.SUSPENDED.toString())) ) {
 			
 				
 				
@@ -842,7 +845,7 @@ public class UserResource{
 				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 			}
 		}
-		LOG.warning("Failed update attempt for username: " + request.getToken().getUsername());
+		LOG.warning("Failed update attempt for username: " + username);
 		return Response.status(Status.BAD_REQUEST).entity("ups").build();
 	}
 	
@@ -1228,6 +1231,14 @@ public class UserResource{
 			Entity selfEntity = txn.get(selfUserKey);
 			Entity targetEntity = txn.get(targetUserKey);
 		
+			//recently added
+			if(!selfEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("CANT DO THAT");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			
 			long followings = selfEntity.getLong("user_following")+1;
 			long followers = targetEntity.getLong("user_followers")+1; 
 		
@@ -1633,6 +1644,13 @@ public class UserResource{
 		Entity selfEntity = txn.get(selfUserKey);
 		Entity targetEntity = txn.get(targetUserKey);
 		
+		if(!selfEntity.getString("user_state").equals(State.ENABLED.toString())) {
+			txn.rollback();
+			LOG.warning("CANT DO THAT");
+			return Response.status(Status.FORBIDDEN).build();
+		}
+		
+		
 		long followings = selfEntity.getLong("user_following")-1;
 		long followers = targetEntity.getLong("user_followers")-1; 
 		
@@ -1856,25 +1874,41 @@ public class UserResource{
 	
 	@Authorize
 	@POST
-	@Path("/report")
+	@Path("/report/{username}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doReport(String username) {
+	public Response doReport(@PathParam("username") String username, @Context HttpHeaders header) {
 
 		
 		Transaction txn = datastore.newTransaction();
 		
+		String self = getUsername(header);
+		
 		Key userKey = database.getUserKey(username);	
+		Key selfKey = database.getUserKey(self);
 		
 		
 		try {
 				
 			Entity userEntity = txn.get(userKey);
+			Entity selfEntity = txn.get(selfKey);
 	
-			if(userEntity == null) {
+			if(userEntity == null || selfEntity == null) {
 				txn.rollback();
 				LOG.warning("No such user");
 				return Response.status(Status.FORBIDDEN).entity("nosuchuser").build();
+			}
+			
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("CANT DO THAT");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(!selfEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("CANT DO THAT");
+				return Response.status(Status.FORBIDDEN).build();
 			}
 			
 			long reports = userEntity.getLong("user_reports")+1;
@@ -1901,21 +1935,72 @@ public class UserResource{
 		}
 		
 	}
-
 	
-	//need autentication
+	
 	@Authorize
 	@POST
-	@Path("/test")
+	@Path("/delete")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	//@Secured({Roles.GBO})
-	public Response doTest() {
+	public Response doDelete(String username) {
 		
-		return Response.ok("{}").build();
+		LOG.warning("Atempt to delete" + username);
+
+		Transaction txn = datastore.newTransaction();
+		
+		Key userKey = datastore.newKeyFactory()
+				.setKind("User")
+				.newKey(username);
+		
+//		Key tokenKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("User", request.getToken().getUsername()))
+//				.setKind("Token")
+//				.newKey(request.getToken().getTokenID());
+		try {
+			
+			
+			Entity userEntity = txn.get(userKey);
+			
+			userEntity = Entity.newBuilder(userEntity)
+					.set("user_state", State.DELETED.toString())
+					.build();
+			
+			txn.update(userEntity);
+			
+			
+			LOG.warning("User deleted : " + username);
+			txn.commit();
+			return Response.ok(" {} ").build(); 
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
 	}
 	
+
 	
+//	//need autentication
+//	@Authorize
+//	@POST
+//	@Path("/test")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	//@Secured({Roles.GBO})
+//	public Response doTest() {
+//		
+//		return Response.ok("{}").build();
+//	}
+//	
+//	
 	
 	//ALL DEPRECATED ----------------------------------------------------------------------------------------------------------------------------------
 	
@@ -1969,18 +2054,7 @@ public class UserResource{
 		
 	}
 	
-	
 
-	public Response doRoleChange(RequestData request) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	public Response doStateChange(RequestData request) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 	
 //	//put?
 //	@POST

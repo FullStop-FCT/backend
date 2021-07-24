@@ -62,6 +62,8 @@ import pt.unl.fct.di.apdc.helpinhand.api.Authorize;
 import pt.unl.fct.di.apdc.helpinhand.api.RequestData;
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
+import pt.unl.fct.di.apdc.helpinhand.util.Profile;
+import pt.unl.fct.di.apdc.helpinhand.util.State;
 
 @Path("/activities")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
@@ -143,6 +145,13 @@ public class ActivityResource {
 			
 			Entity userEntity = txn.get(userKey);
 			
+			//recently added
+			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("CANT DO THAT");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
 			Key createdKey = datastore.allocateId(factory
 //					.addAncestors(PathElement.of("User", act.getActivityOwner()), PathElement.of("Activity", act.getID()))
 					.addAncestor(PathElement.of("Activity", act.getID()))
@@ -181,12 +190,15 @@ public class ActivityResource {
 
 						.set("activity_waypoints", convertToValueList(request.getActivityData().getWaypoints()))
 						.set("activity_keywords", convertToValueList(request.getActivityData().getKeywords()))
+						
+						.set("is_org", userEntity.getBoolean("is_org"))
 						.build();
 				
 				createdActivityEntity = Entity.newBuilder(createdKey)
 						.set("created_by", username)
 						.set("activity_title", request.getActivityData().getTitle())
 						.set("activity_ID", act.getID()) //just added
+						.set("is_org", userEntity.getBoolean("is_org")) //just added
 						.build();
 				
 				txn.add(activityEntity, createdActivityEntity);
@@ -256,31 +268,31 @@ public class ActivityResource {
 //	}
 	
 	
-	@POST
-	@Path("/test")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doTest(String time) {
-		
-		
-		Date date1;
-		try {
-			date1 = new SimpleDateFormat("yyyy-MM-dd").parse(time);
-			Timestamp.of(date1);
-			if(Timestamp.of(date1).compareTo(Timestamp.now())==-1) {
-				System.out.println(Timestamp.of(date1) + " e menor");
-			}
-			
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-//		if(today.isAfter(date)) {
-//			System.out.println("date is after today");
+//	@POST
+//	@Path("/test")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doTest(String time) {
+//		
+//		
+//		Date date1;
+//		try {
+//			date1 = new SimpleDateFormat("yyyy-MM-dd").parse(time);
+//			Timestamp.of(date1);
+//			if(Timestamp.of(date1).compareTo(Timestamp.now())==-1) {
+//				System.out.println(Timestamp.of(date1) + " e menor");
+//			}
+//			
+//		} catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
 //		}
-		return Response.ok(" {} ").build();
-	}
+//
+////		if(today.isAfter(date)) {
+////			System.out.println("date is after today");
+////		}
+//		return Response.ok(" {} ").build();
+//	}
 
 	
 	private Timestamp toTimestamp(String date) {
@@ -305,6 +317,15 @@ public class ActivityResource {
 
 		try {
 
+			//recently added
+			Key selfKey = database.getUserKey(username);
+			Entity selfEntity = txn.get(selfKey);
+			if(!selfEntity.getString("user_state").equals(State.ENABLED.toString())) {
+				txn.rollback();
+				LOG.warning("CANT DO THAT");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
 			
 			if(username.equals(activityOwner)) {
 				txn.rollback();
@@ -358,6 +379,7 @@ public class ActivityResource {
 					.set("owner", activityOwner)
 					.set("activity_date", date)//just added
 					.set("activity_time", activityEntity.getLong("activity_time")) // just added
+					.set("is_org", activityEntity.getBoolean("is_org")) // just added
 //					activityEntity.get
 //					.set("user_username", token.getUsername())
 					.build();
@@ -539,6 +561,8 @@ public class ActivityResource {
 	
 	
 	
+	//REWORK
+	
 	@Authorize
 	@GET
 	@Path("/search")
@@ -619,63 +643,63 @@ public class ActivityResource {
 	}
 
 	
-	@Authorize
-	@GET
-	@Path("/list")
-//	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doListUsers() {
-		
-		Transaction txn = datastore.newTransaction();
-		
-
-		
-		LOG.warning("Doing list activities");
-		
-		try {
-
-			
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("Activity")
-//					.setFilter(
-//									PropertyFilter.hasAncestor(
-//											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
-//							)
-					.setOrderBy(OrderBy.desc("activity_date"))
-					.setLimit(10)
-					.build();
-										
-						
-			QueryResults<Entity> titlesQuery = datastore.run(query);
-			
-			List<ActivitiesData> activities = new ArrayList<>();
-			
-			titlesQuery.forEachRemaining(activity -> {
-				
-				ActivitiesData newAct = createActivity(activity);
-
-
-				activities.add(newAct);
-			});
-			
-			
-			txn.commit();
-//			return Response.ok(" {} ").build();
-			return Response.status(Status.OK).entity(g.toJson(activities)).build();
-			
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-		
-	}
+//	@Authorize
+//	@GET
+//	@Path("/list")
+////	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doListUsers() {
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//
+//		
+//		LOG.warning("Doing list activities");
+//		
+//		try {
+//
+//			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("Activity")
+////					.setFilter(
+////									PropertyFilter.hasAncestor(
+////											datastore.newKeyFactory().setKind("User").newKey(token.getUsername()))
+////							)
+//					.setOrderBy(OrderBy.desc("activity_date"))
+//					.setLimit(10)
+//					.build();
+//										
+//						
+//			QueryResults<Entity> titlesQuery = datastore.run(query);
+//			
+//			List<ActivitiesData> activities = new ArrayList<>();
+//			
+//			titlesQuery.forEachRemaining(activity -> {
+//				
+//				ActivitiesData newAct = createActivity(activity);
+//
+//
+//				activities.add(newAct);
+//			});
+//			
+//			
+//			txn.commit();
+////			return Response.ok(" {} ").build();
+//			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//		
+//	}
 	
 	
 	@Authorize
@@ -708,7 +732,7 @@ public class ActivityResource {
 			
 			EntityQuery.Builder queryBuilder = Query.newEntityQueryBuilder()
 					.setKind("Activity")
-					.setOrderBy(OrderBy.desc("activity_title"))
+					.setOrderBy(OrderBy.desc("activity_date"))
 					.setLimit(pageSize)
 					.setStartCursor(startCursor);
 
@@ -757,6 +781,7 @@ public class ActivityResource {
 	
 	
 	
+	//rework
 	
 	@Authorize
 	@GET
@@ -836,6 +861,8 @@ public class ActivityResource {
 	
 	
 	
+	//rework
+	
 	@Authorize
 	@GET
 	@Path("/listByUser")
@@ -854,7 +881,6 @@ public class ActivityResource {
 
 			Query<Entity> query = Query.newEntityQueryBuilder()
 					.setKind("Activity")
-
 					.build();
 
 			
@@ -1013,106 +1039,70 @@ public class ActivityResource {
 			}
 		}
 	}
-	
 //	
-//	@Authorize
-//	@POST
-//	@Path("/compute/{activityID}")
-//	@Consumes(MediaType.APPLICATION_JSON)
-////	@Produces(MediaType.APPLICATION_JSON)
-//	public Response triggerExecuteComputeTask(@PathParam("activityID") String activityID) {
-//		Queue queue = QueueFactory.getDefaultQueue();
-//		
-//		String url="/rest/activities/computeAddHours";
-//		
-////		queue.add(TaskOptions.Builder.withUrl("/rest/activities/computeAddHours/"+activityID+"/"+minutes).);
-//		queue.add(TaskOptions.Builder.withUrl(url).header("data", activityID));
-//		LOG.warning("hello?");
-//		return Response.ok().build();
-//	}
-//	  
-//	@POST
-//	@Path("/computeAddHours")
-//	@Consumes(MediaType.APPLICATION_JSON)
-////	@Produces(MediaType.APPLICATION_JSON)
-//	public Response executeComputeTask(@Context HttpHeaders header) {
-////	public Response executeComputeTask() {
-//		LOG.warning("Starting to execute computation tasks");
-//		Transaction txn = datastore.newTransaction();
-//
-//		try {
-//			
-//			
-//		
-////			String activityID="d156ef4a-a378-4143-9c53-8702868e1cac";
-//			String activityID=header.getHeaderString("data");
-//			String minutes="10";
-//			
-//			Query<Entity> query = Query.newEntityQueryBuilder()
-//					.setKind("UserJoinedActivity")
-//					.setFilter(
-//							PropertyFilter.eq("activity_ID", activityID))
-//					.build();
-//			
-//			QueryResults<Entity> results = datastore.run(query);
-//			
-//			List<String> users = new ArrayList<>();
-//			
-//			
-//			results.forEachRemaining(result-> {
-//				
-//				String newUser = result.getString("user");
-//						
-//				users.add(newUser);
-//			});
-//			
-////			String minutes="5";
-//			
-//			users.forEach(user->{
-//				Key userKey = database.getUserKey(user);
-//				Entity userEntity = txn.get(userKey);
-//				if(userEntity!=null) {
-//					long hours = userEntity.getLong("user_hours")+Long.valueOf(minutes);
-//					userEntity = Entity.newBuilder(userEntity)
-//							.set("user_hours", hours)
-//							.build();
-//					txn.update(userEntity);
-//					LOG.warning("Points added to User : " + user);
-//				}
-//			});
-//			
-//
-////			Thread.sleep(1000 * 60);
-//		} catch (Exception e) {
-//			LOG.logp(Level.SEVERE, this.getClass().getCanonicalName(), "executeComputeTask", "An exception has ocurred", e);
-//			txn.rollback();
-//			return Response.serverError().build();
-//		} //Simulates 5m execution
-//		
-//		
-//		txn.commit();
-//		return Response.ok().build();
-//	}
-	
-	
-	
+//	
 	@Authorize
-	@POST
-	@Path("/addhours")
+	@GET
+	@Path("/compute/{activityID}/{points}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doAddHours(RequestData data) {
-		LOG.warning("Trying to add points to users");
+//	@Produces(MediaType.APPLICATION_JSON)
+	public Response triggerExecuteComputeTask(@PathParam("activityID") String activityID, @PathParam("points") String points) {
+		Queue queue = QueueFactory.getDefaultQueue();
 		
+		String url="/rest/activities/computeAddHours/"+activityID+"/"+points;
+//		LOG.info(header);
+//		queue.add(TaskOptions.Builder.withUrl("/rest/activities/computeAddHours/"+activityID+"/"+minutes).);
+		queue.add(TaskOptions.Builder.withUrl(url));
+//		LOG.warning("hello?");
+		return Response.ok().build();
+	}
+	  
+	@POST
+	@Path("/computeAddHours/{activityID}/{points}")
+//	@Consumes(MediaType.TEXT_HTML)
+//	@Produces(MediaType.APPLICATION_JSON)
+	public Response executeComputeTask(@PathParam("activityID") String activityID, @PathParam("points") String points) {
+//	public Response executeComputeTask() {
+		LOG.warning("Starting to execute computation tasks");
 		Transaction txn = datastore.newTransaction();
-		
+
 		try {
+			
+			
 		
-			data.getUsers().forEach(user->{
+//			String activityID2="d156ef4a-a378-4143-9c53-8702868e1cac";
+			
+//			String minutes="10";
+			
+			LOG.warning("Getting users");
+			
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							PropertyFilter.eq("activity_ID", activityID))
+					.build();
+			
+			QueryResults<Entity> results = datastore.run(query);
+			
+			List<String> users = new ArrayList<>();
+			
+			
+			results.forEachRemaining(result-> {
+				
+				String newUser = result.getString("user");
+						
+				users.add(newUser);
+			});
+			
+//			String minutes="5";
+			
+			LOG.warning("Giving points");
+			
+			users.forEach(user->{
 				Key userKey = database.getUserKey(user);
 				Entity userEntity = txn.get(userKey);
 				if(userEntity!=null) {
-					long hours = userEntity.getLong("user_hours")+data.getMinutes();
+					long hours = userEntity.getLong("user_hours")+Long.valueOf(points);
 					userEntity = Entity.newBuilder(userEntity)
 							.set("user_hours", hours)
 							.build();
@@ -1120,21 +1110,61 @@ public class ActivityResource {
 					LOG.warning("Points added to User : " + user);
 				}
 			});
-			txn.commit();
-			return Response.ok(" {} ").build();
 			
-		}catch(Exception e) {
+
+//			Thread.sleep(1000 * 60);
+		} catch (Exception e) {
+			LOG.logp(Level.SEVERE, this.getClass().getCanonicalName(), "executeComputeTask", "An exception has ocurred", e);
 			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
+			return Response.serverError().build();
+		} //Simulates 5m execution
+		
+		
+		txn.commit();
+		return Response.ok().build();
 	}
+	
+	
+	
+//	@Authorize
+//	@POST
+//	@Path("/addhours")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doAddHours(RequestData data) {
+//		LOG.warning("Trying to add points to users");
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//		try {
+//		
+//			data.getUsers().forEach(user->{
+//				Key userKey = database.getUserKey(user);
+//				Entity userEntity = txn.get(userKey);
+//				if(userEntity!=null) {
+//					long hours = userEntity.getLong("user_hours")+data.getMinutes();
+//					userEntity = Entity.newBuilder(userEntity)
+//							.set("user_hours", hours)
+//							.build();
+//					txn.update(userEntity);
+//					LOG.warning("Points added to User : " + user);
+//				}
+//			});
+//			txn.commit();
+//			return Response.ok(" {} ").build();
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
 	
 	
 	//-------------------------------3 listagens
@@ -1145,9 +1175,37 @@ public class ActivityResource {
 	@Path("/listCreatedActivities")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doCreatedBy(@QueryParam("username") String username, String startCursorString) {
+	public Response doCreatedBy(@QueryParam("username") String username, String startCursorString, @Context HttpHeaders header) {
 
+		
+		
+		
 		Transaction txn = datastore.newTransaction();
+		
+		// for private/public profile see
+		
+		String self = getUsername(header);
+		
+		
+		if(!self.equals(username)) {
+			Key userkey = database.getUserKey(username);
+			Entity userEntity = txn.get(userkey);
+			
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+				txn.rollback();
+				LOG.warning("Private User");
+				return Response.ok(" {} ").build(); 
+			}
+		}
+		
+		//added for private / public profile see
+		
 		
 		int pageSize;
 		
@@ -1162,6 +1220,8 @@ public class ActivityResource {
 		LOG.warning("Doing list created activities");
 		
 		try {
+			
+			
 			
 			pageSize = 6;
 
@@ -1228,11 +1288,38 @@ public class ActivityResource {
 	@Path("/listPastActivities")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetPastActivities(@QueryParam("username") String username, String startCursorString) {
+	public Response doGetPastActivities(@QueryParam("username") String username, String startCursorString, @Context HttpHeaders header) {
 		
 //		String username = getUsername(header); 
 		
 		Transaction txn = datastore.newTransaction();
+		
+		// for private/public profile see
+		
+		String self = getUsername(header);
+				
+				
+		if(!self.equals(username)) {
+			Key userkey = database.getUserKey(username);
+			Entity userEntity = txn.get(userkey);
+					
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+					
+			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+				txn.rollback();
+				LOG.warning("Private User");
+				return Response.ok(" {} ").build(); 
+			}
+		}
+				
+				//added for private / public profile see		
+		
+		
+		
 		int pageSize;
 		
 		Cursor startCursor = null;
@@ -1315,11 +1402,38 @@ public class ActivityResource {
 	@Path("/listJoinedActivities")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetJoinedActivities(@QueryParam("username") String username, String startCursorString) {
+	public Response doGetJoinedActivities(@QueryParam("username") String username, String startCursorString, @Context HttpHeaders header) {
 		
 //		String username = getUsername(header); 
 		
 		Transaction txn = datastore.newTransaction();
+		
+		// for private/public profile see
+		
+		String self = getUsername(header);
+				
+				
+		if(!self.equals(username)) {
+			Key userkey = database.getUserKey(username);
+			Entity userEntity = txn.get(userkey);
+					
+			if(userEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+					
+			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
+				txn.rollback();
+				LOG.warning("Private User");
+				return Response.ok(" {} ").build(); 
+			}
+		}
+				
+				//added for private / public profile see
+
+		
+		
 		
 		int pageSize;
 		Cursor startCursor = null;
@@ -1530,9 +1644,11 @@ public class ActivityResource {
 			Query<Entity> query = Query.newEntityQueryBuilder()
 					.setKind("UserJoinedActivity")
 					.setFilter(
-							CompositeFilter.and(PropertyFilter.eq("user", username), 
-									PropertyFilter.le	("activity_date", today))
-							
+							CompositeFilter.and(
+									PropertyFilter.eq("user", username), 
+									PropertyFilter.le("activity_date",today),
+									PropertyFilter.eq("is_org", true) 
+									)
 							)
 					.build();
 

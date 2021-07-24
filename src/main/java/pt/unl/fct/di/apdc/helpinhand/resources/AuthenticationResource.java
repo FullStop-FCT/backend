@@ -66,11 +66,117 @@ public class AuthenticationResource {
 	
 	
 	
+//	@POST
+//	@Path("/login")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doLoginJWT(RequestData request) {
+//		
+//		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
+//		
+//		Key userKey = datastore.newKeyFactory()
+//				.setKind("User")
+//				.newKey(request.getUsername());
+//		
+//		
+//			
+//			
+//			Transaction txn = datastore.newTransaction();
+//			
+//			try {
+//				Entity user = txn.get(userKey);
+//				
+//				if(user == null) {
+//					txn.rollback();
+//					LOG.warning("Failed login attempt");
+//					return Response.status(Status.FORBIDDEN).entity("Failed login attempt").build();
+//				}
+//				
+//				if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED")) {
+//					txn.rollback();
+//					LOG.warning("Failed login attempt");
+//					return Response.status(Status.FORBIDDEN).entity("email").build();
+//				}
+//				
+//				String hashedPWD = user.getString("user_pwd");
+//				if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
+//		
+////					String token = issueToken(request.getUsername(), 1);
+//					
+////					AuthToken token = new AuthToken(request.getUsername(),user.getString("user_role"));
+//					
+//					
+////					Key tokenKey = datastore.allocateId(
+////							datastore.newKeyFactory()
+////								.addAncestor(PathElement.of("User", request.getUsername()))
+////								.setKind("JWTToken")
+////								.newKey()
+////							);
+//					
+////					String encoded = Base64.getEncoder().encodeToString(token.getTokenID().getBytes());
+//					
+//					Date now = new Date(System.currentTimeMillis());
+////					Date late = newDate(Timestamp.now() + TimeUnit.HOURS.toMillis(1));
+//					Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+//
+//					
+////					Dotenv dotenv = Dotenv.load();
+////
+////					String secret = dotenv.get("SECRET");
+//					
+//					Algorithm algorithm = Algorithm.HMAC512(SECRET);
+//					String jwtToken = JWT.create()
+//							.withClaim("role", user.getString("user_role"))
+//							.withClaim("image", user.getString("user_image"))
+//							.withIssuedAt(now)
+//							.withExpiresAt(later)
+////							.withIssuedAt(Timestamp.now().toDate())
+////							.withExpiresAt(token.getExpirationData().toDate())
+//							.withIssuer(request.getUsername())
+//							.sign(algorithm);
+//					
+////					Entity tokenEntity = Entity.newBuilder(tokenKey)
+////							.set("issuer", request.getUsername())
+////							.set("role", user.getString("user_role"))
+////							.set("image", user.getString("user_image"))
+////							.set("creationData",now.toString() )
+////							.set("expirationData", later.toString())
+////							.set("secret","secret")
+////							.build();
+////					
+////					txn.put(tokenEntity);
+//					txn.commit();
+//					
+//					return Response.ok(jwtToken).build();
+//				
+//				
+//				}
+//				else {
+//					txn.rollback();
+//					LOG.warning("Wrong password for username: " + request.getUsername());
+//					return Response.status(Status.FORBIDDEN).entity("inputerror").build();
+//				}
+//			}catch(Exception e) {
+//				txn.rollback();
+//				LOG.warning("exception "+ e.toString());
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//			}finally {
+//				if(txn.isActive()) {
+//					txn.rollback();
+//					LOG.warning("entered finally");
+//					return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//				}
+//			}
+//
+//	}
+	
+	
+	
 	@POST
 	@Path("/login")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doLoginJWT(RequestData request) {
+	public Response doLogin(RequestData request) {
 		
 		LOG.warning("WARNING: Login atempt by user: " + request.getUsername());
 		
@@ -78,84 +184,94 @@ public class AuthenticationResource {
 				.setKind("User")
 				.newKey(request.getUsername());
 		
-		
+		Key staffKey = datastore.newKeyFactory()
+				.setKind("Staff")
+				.newKey(request.getUsername());
 			
 			
-			Transaction txn = datastore.newTransaction();
-			
+		Transaction txn = datastore.newTransaction();
+		String hashedPWD;	
 			try {
+				
+				Entity staff = txn.get(staffKey);
+				
+				if(staff != null) {
+					hashedPWD = staff.getString("staff_pwd");
+					if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
+			
+
+						Date now = new Date(System.currentTimeMillis());
+
+						Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+
+						
+						Algorithm algorithm = Algorithm.HMAC512(SECRET);
+						String jwtToken = JWT.create()
+								.withClaim("role", staff.getString("staff_role"))
+								.withIssuedAt(now)
+								.withExpiresAt(later)
+								.withIssuer(request.getUsername())
+								.sign(algorithm);
+						
+
+						txn.commit();
+						
+						return Response.ok(jwtToken).build();
+					}else {
+						txn.rollback();
+						LOG.warning("Wrong password for username: " + request.getUsername());
+						return Response.status(Status.FORBIDDEN).entity("inputerror").build();
+					}
+				}
+				
 				Entity user = txn.get(userKey);
 				
-				if(user == null) {
-					txn.rollback();
-					LOG.warning("Failed login attempt");
-					return Response.status(Status.FORBIDDEN).entity("inputerror").build();
-				}
-				
-				if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED")) {
-					txn.rollback();
-					LOG.warning("Failed login attempt");
-					return Response.status(Status.FORBIDDEN).entity("email").build();
-				}
-				
-				String hashedPWD = user.getString("user_pwd");
-				if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
-		
-//					String token = issueToken(request.getUsername(), 1);
+				if(user!=null) {
+					if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED") || user.getString("user_state").equals("SUSPENDED")) {
+						txn.rollback();
+						LOG.warning("Failed login attempt");
+						return Response.status(Status.FORBIDDEN).entity("email").build();
+					}
 					
-//					AuthToken token = new AuthToken(request.getUsername(),user.getString("user_role"));
+					hashedPWD = user.getString("user_pwd");
+					if(hashedPWD.equals(DigestUtils.sha512Hex(request.getPassword()))) {
+			
 					
-					
-//					Key tokenKey = datastore.allocateId(
-//							datastore.newKeyFactory()
-//								.addAncestor(PathElement.of("User", request.getUsername()))
-//								.setKind("JWTToken")
-//								.newKey()
-//							);
-					
-//					String encoded = Base64.getEncoder().encodeToString(token.getTokenID().getBytes());
-					
-					Date now = new Date(System.currentTimeMillis());
-//					Date late = newDate(Timestamp.now() + TimeUnit.HOURS.toMillis(1));
-					Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+						Date now = new Date(System.currentTimeMillis());
 
-					
-//					Dotenv dotenv = Dotenv.load();
-//
-//					String secret = dotenv.get("SECRET");
-					
-					Algorithm algorithm = Algorithm.HMAC512(SECRET);
-					String jwtToken = JWT.create()
-							.withClaim("role", user.getString("user_role"))
-							.withClaim("image", user.getString("user_image"))
-							.withIssuedAt(now)
-							.withExpiresAt(later)
-//							.withIssuedAt(Timestamp.now().toDate())
-//							.withExpiresAt(token.getExpirationData().toDate())
-							.withIssuer(request.getUsername())
-							.sign(algorithm);
-					
-//					Entity tokenEntity = Entity.newBuilder(tokenKey)
-//							.set("issuer", request.getUsername())
-//							.set("role", user.getString("user_role"))
-//							.set("image", user.getString("user_image"))
-//							.set("creationData",now.toString() )
-//							.set("expirationData", later.toString())
-//							.set("secret","secret")
-//							.build();
-//					
-//					txn.put(tokenEntity);
-					txn.commit();
-					
-					return Response.ok(jwtToken).build();
+						Date later = new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+
+						
+
+						
+						Algorithm algorithm = Algorithm.HMAC512(SECRET);
+						String jwtToken = JWT.create()
+								.withClaim("role", user.getString("user_role"))
+								.withClaim("image", user.getString("user_image"))
+								.withIssuedAt(now)
+								.withExpiresAt(later)
+
+								.withIssuer(request.getUsername())
+								.sign(algorithm);
+						
+
+						txn.commit();
+						
+						return Response.ok(jwtToken).build();
+					}else {
+						txn.rollback();
+						LOG.warning("Wrong password for username: " + request.getUsername());
+						return Response.status(Status.FORBIDDEN).entity("inputerror").build();
+					}
+				}
 				
 				
-				}
-				else {
-					txn.rollback();
-					LOG.warning("Wrong password for username: " + request.getUsername());
-					return Response.status(Status.FORBIDDEN).entity("inputerror").build();
-				}
+				txn.rollback();
+				LOG.warning("Failed login attempt");
+				return Response.status(Status.FORBIDDEN).entity("inputerror").build();
+				
+				
+		
 			}catch(Exception e) {
 				txn.rollback();
 				LOG.warning("exception "+ e.toString());
@@ -171,7 +287,6 @@ public class AuthenticationResource {
 	
 		
 	}
-	
 	
 	@POST
 	@Path("/secretLogin")
@@ -377,70 +492,70 @@ public class AuthenticationResource {
 	
 	
 	//@POST
-	@DELETE
-	@Path("/logout")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response doLogout(AuthToken token) {
-		
-		Transaction txn = datastore.newTransaction();
-		
-		Key tokenKey = datastore.newKeyFactory()
-				.addAncestor(PathElement.of("User", token.getUsername()))
-				.setKind("Token")
-				.newKey(token.getTokenID());
-		Entity tokenEntity = txn.get(tokenKey);
-		
-		try {
-			
-//			if(tokenEntity == null || System.currentTimeMillis() > token.getExpirationData()) {
+//	@DELETE
+//	@Path("/logout")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response doLogout(AuthToken token) {
+//		
+//		Transaction txn = datastore.newTransaction();
+//		
+//		Key tokenKey = datastore.newKeyFactory()
+//				.addAncestor(PathElement.of("User", token.getUsername()))
+//				.setKind("Token")
+//				.newKey(token.getTokenID());
+//		Entity tokenEntity = txn.get(tokenKey);
+//		
+//		try {
+//			
+////			if(tokenEntity == null || System.currentTimeMillis() > token.getExpirationData()) {
+////				txn.rollback();
+////				LOG.warning("Token Authentication Failed");
+////				return Response.status(Status.FORBIDDEN).build();
+////			}
+////			
+//			if(tokenEntity == null) {
 //				txn.rollback();
 //				LOG.warning("Token Authentication Failed");
 //				return Response.status(Status.FORBIDDEN).build();
 //			}
 //			
-			if(tokenEntity == null) {
-				txn.rollback();
-				LOG.warning("Token Authentication Failed");
-				return Response.status(Status.FORBIDDEN).build();
-			}
-			
-			Query<Entity> query = Query.newEntityQueryBuilder()
-					.setKind("Token")
-					.setFilter(
-							StructuredQuery.PropertyFilter.eq("token_username", token.getUsername()))
-					.build();
-			
-			QueryResults<Entity> tokens = datastore.run(query);
-			
-			List<Key> tokenKeysList = new ArrayList<>();
-			
-			tokens.forEachRemaining(userTokens -> {
-				tokenKeysList.add(userTokens.getKey());
-			});
-			
-			for(Key tokenIDkey : tokenKeysList) {
-				
-				LOG.warning("deleted token: " + tokenIDkey.toString());
-				txn.delete(tokenIDkey);
-					
-			}
-			txn.commit();
-			return Response.ok(" {} ").build();
-//			return Response.temporaryRedirect(new URI("https://webapp-310017.ey.r.appspot.com/logout/logout.html")).build();
-//			return Response.status(200).location(new URI("https://webapp-310017.ey.r.appspot.com/logout/logout.html")).build();
-			
-		}catch(Exception e) {
-			txn.rollback();
-			LOG.warning("exception "+ e.toString());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
-		}finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				LOG.warning("entered finally");
-				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-			}
-		}
-	}
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("Token")
+//					.setFilter(
+//							StructuredQuery.PropertyFilter.eq("token_username", token.getUsername()))
+//					.build();
+//			
+//			QueryResults<Entity> tokens = datastore.run(query);
+//			
+//			List<Key> tokenKeysList = new ArrayList<>();
+//			
+//			tokens.forEachRemaining(userTokens -> {
+//				tokenKeysList.add(userTokens.getKey());
+//			});
+//			
+//			for(Key tokenIDkey : tokenKeysList) {
+//				
+//				LOG.warning("deleted token: " + tokenIDkey.toString());
+//				txn.delete(tokenIDkey);
+//					
+//			}
+//			txn.commit();
+//			return Response.ok(" {} ").build();
+////			return Response.temporaryRedirect(new URI("https://webapp-310017.ey.r.appspot.com/logout/logout.html")).build();
+////			return Response.status(200).location(new URI("https://webapp-310017.ey.r.appspot.com/logout/logout.html")).build();
+//			
+//		}catch(Exception e) {
+//			txn.rollback();
+//			LOG.warning("exception "+ e.toString());
+//			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+//		}finally {
+//			if(txn.isActive()) {
+//				txn.rollback();
+//				LOG.warning("entered finally");
+//				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//			}
+//		}
+//	}
 	
 	
 	

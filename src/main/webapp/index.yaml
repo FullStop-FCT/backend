@@ -29,3 +29,9 @@ indexes:
   properties:
   - name: date
     direction: desc
+    
+    
+- kind: UserJoinedActivity
+  properties:
+  - name: is_org
+  - name: activity_date
