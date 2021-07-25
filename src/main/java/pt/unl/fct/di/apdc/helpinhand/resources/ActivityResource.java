@@ -1,5 +1,6 @@
 package pt.unl.fct.di.apdc.helpinhand.resources;
 
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -55,6 +56,9 @@ import com.google.cloud.datastore.StructuredQuery.OrderBy;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.SendGrid;
 
 import pt.unl.fct.di.apdc.helpinhand.api.ActivitiesData;
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
@@ -72,7 +76,7 @@ public class ActivityResource {
 	Database database = new Database();
 	
 	private static final Logger LOG = Logger.getLogger(ActivityResource.class.getName());
-	
+	private static final String SENDGRID_API_KEY="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";
 	
 	private static final DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 	public String timestamp;
@@ -210,6 +214,10 @@ public class ActivityResource {
 						.build();
 				txn.update(newUser);
 				
+				
+				if(userEntity.getBoolean("is_org")) {
+					sendMail(userEntity.getString("contact_list_id"), request.getActivityData().getTitle());
+				}
 
 				
 				LOG.warning("activity registered " + request.getActivityData().getTitle());
@@ -231,8 +239,47 @@ public class ActivityResource {
 			}
 		}
 		
-//		return null;
 	}	
+	
+	@POST
+	@Path("/testemail")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doEmailTest() {
+		
+		sendMail("dd8a4474-c56c-401a-b471-4551bb61e995","teste");
+		return Response.ok().build();
+	}
+	
+	
+	private void sendMail(String listID, String title) {
+		LOG.warning("sending email to all contacts in list");
+		
+		
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);	 
+		 
+//		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+		Request request = new Request();
+		try {
+			request.setMethod(Method.POST);
+			request.setEndpoint("/marketing/singlesends");
+			request.setBody("{\"name\":\"Example API Created Single Send\",\"send_at\":\"2021-07-25T10:20:52Z\",\"send_to\":{\"all\":true},\"email_config\":{\"design_id\":\"72fa35dc-8076-4637-bfeb-813fba6dfff8\",\"sender_id\":1762877}}");
+			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
+//			request.addHeader("content-type", "application/json");
+				  
+				  
+			sg.api(request);
+				 
+				  
+				  
+				  com.sendgrid.Response response = sg.api(request);
+				  System.out.println(response.getStatusCode());
+				  System.out.println(response.getBody());
+				  System.out.println(response.getHeaders());
+			} catch (IOException ex) {
+				LOG.warning(ex.getMessage());
+			}
+	}
+	
 	
 	private List<Value<String>> convertToValueList(List<String> list) {
 		// TODO Auto-generated method stub

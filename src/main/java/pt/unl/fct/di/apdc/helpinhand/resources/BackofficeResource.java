@@ -80,7 +80,7 @@ Database database = new Database();
 			
 //			System.out.println(role);
 			
-			if(!role.equals(Roles.BO.toString()) && !role.equals(Roles.ADMIN.toString())) {
+			if(!role.equals(Roles.ADMIN.toString())) {
 //				System.out.println(!role.equals(Roles.GBO.toString()));
 //				System.out.println(!role.equals(Roles.SU.toString()));
 				txn.rollback();
@@ -134,10 +134,10 @@ Database database = new Database();
 	
 	@Authorize
 	@POST
-	@Path("/suspend/{username}")
-//	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/suspend")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doSuspend(@PathParam("username") String username, @Context HttpHeaders header) {
+	public Response doSuspend(String username, @Context HttpHeaders header) {
 
 		LOG.warning("Attempt to disable user: "+ username);
 		
@@ -197,10 +197,10 @@ Database database = new Database();
 	
 	@Authorize
 	@POST
-	@Path("/enable/{username}")
-//	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/enable")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doEnable(@PathParam("username") String username, @Context HttpHeaders header) {
+	public Response doEnable(String username, @Context HttpHeaders header) {
 
 		LOG.warning("Attempt to disable user: "+ username);
 		
@@ -258,10 +258,10 @@ Database database = new Database();
 	
 	@Authorize
 	@POST
-	@Path("/delete/{username}")
-//	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/delete")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doDelete(@PathParam("username") String username, @Context HttpHeaders header) {
+	public Response doDelete(String username, @Context HttpHeaders header) {
 
 		LOG.warning("Attempt to disable user: "+ username);
 		
@@ -320,10 +320,10 @@ Database database = new Database();
 	
 	@Authorize
 	@POST
-	@Path("/promote/{staffUsername}")
-//	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/promote")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doPromote(@PathParam("staffUsername") String staffUsername, @Context HttpHeaders header) {
+	public Response doPromote(String staffUsername, @Context HttpHeaders header) {
 
 		LOG.warning("Attempt to promote user: "+ staffUsername);
 		
@@ -382,10 +382,10 @@ Database database = new Database();
 	
 	@Authorize
 	@POST
-	@Path("/demote/{staffUsername}")
-//	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/demote")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doDemote(@PathParam("staffUsername") String staffUsername, @Context HttpHeaders header) {
+	public Response doDemote(String staffUsername, @Context HttpHeaders header) {
 
 		LOG.warning("Attempt to demote user: "+ staffUsername);
 		
@@ -445,10 +445,10 @@ Database database = new Database();
 	
 	@Authorize
 	@POST
-	@Path("/deleteStaff/{staffUsername}")
-//	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/deleteStaff")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doDeleteStaff(@PathParam("staffUsername") String staffUsername, @Context HttpHeaders header) {
+	public Response doDeleteStaff(String staffUsername, @Context HttpHeaders header) {
 
 		LOG.warning("Attempt to delete user: "+ staffUsername);
 		

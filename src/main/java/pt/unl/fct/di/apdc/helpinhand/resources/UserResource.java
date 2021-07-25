@@ -516,7 +516,7 @@ public class UserResource{
 	private void sendMail(String mailTo, String jwt) {
 		
 		
-		LOG.warning(jwt);
+//		LOG.warning(jwt);
 		
 		DecodedJWT jwtDecoded = JWT.decode(jwt);
 		String username = jwtDecoded.getIssuer();
