@@ -247,7 +247,8 @@ public class UserResource{
 		
 		Personalization personalization = new Personalization();
 //		personalization.addDynamicTemplateData("username", username);
-		personalization.addDynamicTemplateData("url", "http://localhost:3000/reset-password/"+jwt);
+//		personalization.addDynamicTemplateData("url", "http://localhost:3000/reset-password/"+jwt);
+		personalization.addDynamicTemplateData("url", "https://hxp.pt/reset-password/"+jwt);
 //		personalization.addDynamicTemplateData("url", "http://www.google.com");
 		personalization.addTo(to);
 		
@@ -535,7 +536,8 @@ public class UserResource{
 		
 		Personalization personalization = new Personalization();
 		personalization.addDynamicTemplateData("username", username);
-		personalization.addDynamicTemplateData("url", "http://localhost:3000/activeacc/"+jwt);
+//		personalization.addDynamicTemplateData("url", "http://localhost:3000/activeacc/"+jwt);
+		personalization.addDynamicTemplateData("url", "https://hxp.pt/activeacc/"+jwt);
 //		personalization.addDynamicTemplateData("url", "http://www.google.com");
 		personalization.addTo(to);
 		
@@ -1179,16 +1181,16 @@ public class UserResource{
 	}
 	
 	
-	@GET
-	@Path("/contactTest")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doContactTest() {
-		
-		LOG.warning("Attempt to add contact to list");
-		addContact("1f91cfd6-14f6-4c58-bd46-4b350090e743","fokush@gmail.com");
-		return Response.ok(" {} ").build();  
-		
-	}
+//	@GET
+//	@Path("/contactTest")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doContactTest() {
+//		
+//		LOG.warning("Attempt to add contact to list");
+//		addContact("1f91cfd6-14f6-4c58-bd46-4b350090e743","fokush@gmail.com");
+//		return Response.ok(" {} ").build();  
+//		
+//	}
 	
 	
 	@Authorize
@@ -1499,13 +1501,13 @@ public class UserResource{
 		
 	}
 	
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/test123")
-	public Response test123(String userEmail) {
-		return Response.ok().entity(getContactID(userEmail)).build();
-	}
+//	
+//	@POST
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Path("/test123")
+//	public Response test123(String userEmail) {
+//		return Response.ok().entity(getContactID(userEmail)).build();
+//	}
 	
 	
 	private String getContactID(String userEmail) {

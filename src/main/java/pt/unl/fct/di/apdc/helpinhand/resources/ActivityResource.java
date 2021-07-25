@@ -59,6 +59,10 @@ import com.google.protobuf.ByteString;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.objects.Personalization;
 
 import pt.unl.fct.di.apdc.helpinhand.api.ActivitiesData;
 import pt.unl.fct.di.apdc.helpinhand.api.AuthToken;
@@ -194,6 +198,7 @@ public class ActivityResource {
 
 						.set("activity_waypoints", convertToValueList(request.getActivityData().getWaypoints()))
 						.set("activity_keywords", convertToValueList(request.getActivityData().getKeywords()))
+						.set("done", false)
 						
 						.set("is_org", userEntity.getBoolean("is_org"))
 						.build();
@@ -216,7 +221,7 @@ public class ActivityResource {
 				
 				
 				if(userEntity.getBoolean("is_org")) {
-					sendMail(userEntity.getString("contact_list_id"), request.getActivityData().getTitle());
+					sendMail(userEntity.getString("user_name"), request.getActivityData().getTitle(),userEntity.getKey().getName());
 				}
 
 				
@@ -241,44 +246,95 @@ public class ActivityResource {
 		
 	}	
 	
-	@POST
-	@Path("/testemail")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response doEmailTest() {
-		
-		sendMail("dd8a4474-c56c-401a-b471-4551bb61e995","teste");
-		return Response.ok().build();
-	}
+	
+//	@POST
+//	@Path("/sendmail")
+//	public Response doSendMail() {
+//		
+//		sendMail("Org New Atributes", "atividade teste","OrgNewAtributes");
+//		return Response.ok().build();
+//	}
 	
 	
-	private void sendMail(String listID, String title) {
-		LOG.warning("sending email to all contacts in list");
+	private void sendMail(String name, String title, String username) {
 		
+		Email from = new Email("notificacoes@fullstop.website");
+		Email to = new Email("fullstophh@gmail.com");
 		
-		SendGrid sg = new SendGrid(SENDGRID_API_KEY);	 
-		 
-//		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+		Mail mail = new Mail();
+		mail.setFrom(from);
+		
+		Personalization personalization = new Personalization();
+		personalization.setSubject("Novo Email de Marketing");
+		personalization.addTo(to);
+		mail.addPersonalization(personalization);
+		
+		Content content = new Content();
+		content.setType("text/plain");
+		content.setValue("Organizacao: " + name +"\r\n"+ "Atividade: " + title +"\r\n" + "Ir ao sendgrid e enviar email aos contatos da lista: " + username);
+		mail.addContent(content);
+		
+		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
 		Request request = new Request();
 		try {
 			request.setMethod(Method.POST);
-			request.setEndpoint("/marketing/singlesends");
-			request.setBody("{\"name\":\"Example API Created Single Send\",\"send_at\":\"2021-07-25T10:20:52Z\",\"send_to\":{\"all\":true},\"email_config\":{\"design_id\":\"72fa35dc-8076-4637-bfeb-813fba6dfff8\",\"sender_id\":1762877}}");
+			request.setEndpoint("mail/send");
+			request.setBody(mail.build());
 			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
-//			request.addHeader("content-type", "application/json");
-				  
+			
+//			com.sendgrid.Response response = sg.api(request);
+//			System.out.println(response.getStatusCode());
+//			System.out.println(response.getBody());
+//			System.out.println(response.getHeaders());	  
 				  
 			sg.api(request);
-				 
-				  
-				  
-				  com.sendgrid.Response response = sg.api(request);
-				  System.out.println(response.getStatusCode());
-				  System.out.println(response.getBody());
-				  System.out.println(response.getHeaders());
-			} catch (IOException ex) {
-				LOG.warning(ex.getMessage());
-			}
+		} catch (IOException ex) {
+			LOG.warning(ex.getMessage());
+		}
 	}
+	
+	
+	
+	
+	
+//	@POST
+//	@Path("/testemail")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response doEmailTest() {
+//		
+//		sendMail("dd8a4474-c56c-401a-b471-4551bb61e995","teste");
+//		return Response.ok().build();
+//	}
+//	
+//	
+//	private void sendMail(String listID, String title) {
+//		LOG.warning("sending email to all contacts in list");
+//		
+//		
+//		SendGrid sg = new SendGrid(SENDGRID_API_KEY);	 
+//		 
+////		SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+//		Request request = new Request();
+//		try {
+//			request.setMethod(Method.POST);
+//			request.setEndpoint("/marketing/singlesends");
+//			request.setBody("{\"name\":\"Example API Created Single Send\",\"send_at\":\"2021-07-25T10:20:52Z\",\"send_to\":{\"all\":true},\"email_config\":{\"design_id\":\"72fa35dc-8076-4637-bfeb-813fba6dfff8\",\"sender_id\":1762877}}");
+//			request.addHeader("Authorization", "Bearer "+SENDGRID_API_KEY);
+////			request.addHeader("content-type", "application/json");
+//				  
+//				  
+//			sg.api(request);
+//				 
+//				  
+//				  
+//				  com.sendgrid.Response response = sg.api(request);
+//				  System.out.println(response.getStatusCode());
+//				  System.out.println(response.getBody());
+//				  System.out.println(response.getHeaders());
+//			} catch (IOException ex) {
+//				LOG.warning(ex.getMessage());
+//			}
+//	}
 	
 	
 	private List<Value<String>> convertToValueList(List<String> list) {
@@ -601,6 +657,7 @@ public class ActivityResource {
 		newAct.setWaypoints(convertToList(activity.getList("activity_waypoints")));
 //		newAct.setWaypoints(activity.getString("activity_waypoints")); //just added
 		newAct.setActivityTime(activity.getLong("activity_time"));//just added
+		newAct.setDone(activity.getBoolean("done"));
 
 		return newAct;
 	}
@@ -747,6 +804,85 @@ public class ActivityResource {
 //		}
 //		
 //	}
+	
+	
+	
+	@Authorize
+	@GET
+	@Path("/listmobile")
+//	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doListActivitiesMobile() {
+		
+		Transaction txn = datastore.newTransaction();
+		
+//		int pageSize;
+//		
+//		Cursor startCursor = null;
+//		
+//		if(startCursorString !=null && !startCursorString.equals("")) {
+//			startCursor = Cursor.fromUrlSafe(startCursorString);
+//		}
+		
+//		pageCursor = Cursor.copyFrom(bytes);
+		
+//		Cursor pageCursor;
+		
+		
+		LOG.warning("Doing list activities");
+		
+		try {
+
+//			pageSize = 5;
+			
+			EntityQuery.Builder queryBuilder = Query.newEntityQueryBuilder()
+					.setKind("Activity")
+					.setOrderBy(OrderBy.desc("activity_date"));
+//					.setLimit(pageSize)
+//					.setStartCursor(startCursor);
+
+
+						
+			QueryResults<Entity> titlesQuery = datastore.run(queryBuilder.build());
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			titlesQuery.forEachRemaining(activity -> {
+				
+				ActivitiesData newAct = createActivity(activity);
+
+
+				activities.add(newAct);
+			});
+			
+			
+//			Cursor cursor = titlesQuery.getCursorAfter();
+//			
+//			String cursorString = null;
+//			
+//			if(cursor!=null) {
+//				cursorString = cursor.toUrlSafe();
+//			}
+//			
+//			
+//			RequestData data = new RequestData(activities, cursorString);
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
 	
 	
 	@Authorize
@@ -1093,10 +1229,12 @@ public class ActivityResource {
 	@Path("/compute/{activityID}/{points}")
 	@Consumes(MediaType.APPLICATION_JSON)
 //	@Produces(MediaType.APPLICATION_JSON)
-	public Response triggerExecuteComputeTask(@PathParam("activityID") String activityID, @PathParam("points") String points) {
+	public Response triggerExecuteComputeTask(@PathParam("activityID") String activityID, @PathParam("points") String points, @Context HttpHeaders header) {
 		Queue queue = QueueFactory.getDefaultQueue();
 		
-		String url="/rest/activities/computeAddHours/"+activityID+"/"+points;
+		String owner = getUsername(header);
+		
+		String url="/rest/activities/computeAddHours/"+activityID+"/"+points+"/"+owner;
 //		LOG.info(header);
 //		queue.add(TaskOptions.Builder.withUrl("/rest/activities/computeAddHours/"+activityID+"/"+minutes).);
 		queue.add(TaskOptions.Builder.withUrl(url));
@@ -1105,16 +1243,18 @@ public class ActivityResource {
 	}
 	  
 	@POST
-	@Path("/computeAddHours/{activityID}/{points}")
+	@Path("/computeAddHours/{activityID}/{points}/{owner}")
 //	@Consumes(MediaType.TEXT_HTML)
 //	@Produces(MediaType.APPLICATION_JSON)
-	public Response executeComputeTask(@PathParam("activityID") String activityID, @PathParam("points") String points) {
+	public Response executeComputeTask(@PathParam("activityID") String activityID, @PathParam("points") String points, @PathParam("owner") String owner) {
 //	public Response executeComputeTask() {
 		LOG.warning("Starting to execute computation tasks");
 		Transaction txn = datastore.newTransaction();
 
 		try {
 			
+			
+			LOG.warning("done");
 			
 		
 //			String activityID2="d156ef4a-a378-4143-9c53-8702868e1cac";
@@ -1157,7 +1297,20 @@ public class ActivityResource {
 					LOG.warning("Points added to User : " + user);
 				}
 			});
+			LOG.warning("done");
 			
+			Key activityKey = factory
+					.addAncestor(PathElement.of("User", owner))
+					.setKind("Activity")
+					.newKey(activityID);
+			
+			Entity activityEntity = txn.get(activityKey);
+			
+			activityEntity = Entity.newBuilder(activityEntity)
+					.set("done", true)
+					.build();
+			
+			txn.update(activityEntity);
 
 //			Thread.sleep(1000 * 60);
 		} catch (Exception e) {
@@ -1495,11 +1648,19 @@ public class ActivityResource {
 		try {
 
 			pageSize = 6;
+			
+			Calendar cal = Calendar.getInstance();
+			
+			Timestamp today = Timestamp.of(cal.getTime());
 
 			Query<Entity> query = Query.newEntityQueryBuilder()
 					.setKind("UserJoinedActivity")
+
 					.setFilter(
-							PropertyFilter.eq("user", username))
+							CompositeFilter.and(PropertyFilter.eq("user", username),
+									PropertyFilter.ge("activity_date", today)
+									)
+							)
 					.setLimit(pageSize)
 					.setStartCursor(startCursor)
 					.build();

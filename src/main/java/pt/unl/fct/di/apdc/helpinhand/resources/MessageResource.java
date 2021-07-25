@@ -191,6 +191,30 @@ public class MessageResource {
 		}
 	}
 	
+	@GET
+	@Path("/test")
+	public Response doTest() {
+		
+		return Response.ok().entity(getImage("fc.luz")).build();
+	}
+	
+	private String getImage(String username) {
+//		Transaction txn = datastore.newTransaction();
+		
+		String image="";
+		
+		Key userKey = factory.setKind("User").newKey(username);
+		Entity userEntity = txn.get(userKey);
+		LOG.warning(userEntity.toString());
+		
+		image=userEntity.getString("user_image");
+		
+//		txn.commit();
+		return image;
+		
+		
+	}
+	
 	
 	@Authorize
 	@POST
@@ -232,15 +256,14 @@ public class MessageResource {
 			
 			msgsQuery.forEachRemaining(message ->{
 				MessageData newMsg = new MessageData();
-				
+
 				newMsg.setAuthor(message.getString("user"));
-				newMsg.setReceiver(message.getString("user"));
+				newMsg.setReceiver(message.getString("owner"));
 				newMsg.setMsgID(message.getLong("id"));
 				newMsg.setMessage(message.getString("message"));
 				newMsg.setImage(message.getString("image"));
 				newMsg.setDate(message.getTimestamp("date").toString());
 				newMsg.setActivityID(message.getString("activity_ID"));
-				
 				messages.add(newMsg);
 	
 			});

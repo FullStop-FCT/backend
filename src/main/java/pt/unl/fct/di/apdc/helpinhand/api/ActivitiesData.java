@@ -27,6 +27,7 @@ public class ActivitiesData {
 	private List<String> keywords;
 	private List<String> waypoints;
 	private long activityTime;
+	private boolean done;
 
 	
 	public ActivitiesData() {
@@ -55,7 +56,7 @@ public class ActivitiesData {
 		this.participants =0;
 		this.waypoints=waypoints;
 		this.setActivityTime(activityTime);
-		
+		this.setDone(false);
 	}
 
 
@@ -224,6 +225,14 @@ public class ActivitiesData {
 
 	public void setActivityTime(long activityTime) {
 		this.activityTime = activityTime;
+	}
+
+	public boolean isDone() {
+		return done;
+	}
+
+	public void setDone(boolean done) {
+		this.done = done;
 	}
 
 

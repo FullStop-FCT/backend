@@ -86,5 +86,6 @@ public class MessageData {
 	public void setMsgID(long msgID) {
 		this.msgID = msgID;
 	}
+
 	
 }
