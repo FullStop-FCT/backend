@@ -227,8 +227,8 @@ public class PaymentResource {
 						.setMode(SessionCreateParams.Mode.PAYMENT)
 //						.setSuccessUrl("http://localhost:3000/rest/create-checkout-session" + "?success=true")
 //						.setCancelUrl("http://localhost:3000/rest/create-checkout-session" + "?canceled=true")
-						.setSuccessUrl("http://localhost:3000/certificate/"+jwtToken)
-						.setCancelUrl("http://localhost:3000/"+username)
+						.setSuccessUrl("https://hxp.pt/certificate/"+jwtToken)
+						.setCancelUrl("https://hxp.pt"+username)
 						.addLineItem(
 								SessionCreateParams.LineItem.builder()
 								.setQuantity(1L)
