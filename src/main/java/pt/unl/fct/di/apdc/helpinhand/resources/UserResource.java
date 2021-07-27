@@ -233,7 +233,8 @@ public class UserResource{
 		DecodedJWT jwtDecoded = JWT.decode(jwt);
 		String username = jwtDecoded.getIssuer();
 		
-		Email from = new Email("HelpinHand@fullstop.website");
+//		Email from = new Email("HelpinHand@fullstop.website");
+		Email from = new Email("hxp@fullstop.website");
 
 //		Email to = new Email("fullstophh@gmail.com"); //change to mailTo
 		
@@ -522,8 +523,9 @@ public class UserResource{
 		DecodedJWT jwtDecoded = JWT.decode(jwt);
 		String username = jwtDecoded.getIssuer();
 		
-		Email from = new Email("HelpinHand@fullstop.website");
-
+//		Email from = new Email("HelpinHand@fullstop.website");
+		Email from = new Email("hxp@fullstop.website");
+		
 //		Email to = new Email("fullstophh@gmail.com");
 		Email to = new Email(mailTo);
 		
@@ -564,7 +566,7 @@ public class UserResource{
 	    
 	    
 		mail.setTrackingSettings(trackingSettings);
-		 
+		
 		Email replyTo = new Email();
 	    replyTo.setName("Full Stop");
 	    replyTo.setEmail("hxp@fullstop.website");
@@ -635,7 +637,7 @@ public class UserResource{
 			
 			
 			userEntity = Entity.newBuilder(userEntity)
-					.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).setExcludeFromIndexes(true).build())
+					.set("user_state", StringValue.newBuilder(State.ENABLED.toString()).build())
 					.build();
 			
 			txn.update(userEntity);

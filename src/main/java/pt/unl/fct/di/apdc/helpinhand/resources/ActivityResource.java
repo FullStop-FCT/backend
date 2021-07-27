@@ -1710,6 +1710,61 @@ public class ActivityResource {
 	
 	
 	
+	@Authorize
+	@GET
+	@Path("/listJoinedActivitiesMobile")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetJoinedActivitiesMobile(@QueryParam("username") String username) {
+		
+
+		Transaction txn = datastore.newTransaction();
+	
+		LOG.warning("Doing list joined activities");
+		
+		try {
+
+
+			Query<Entity> query = Query.newEntityQueryBuilder()
+					.setKind("UserJoinedActivity")
+					.setFilter(
+							PropertyFilter.eq("user", username)
+							)
+					.build();
+
+			
+			QueryResults<Entity> createdQuery = datastore.run(query);
+			
+			List<ActivitiesData> activities = new ArrayList<>();
+			
+			createdQuery.forEachRemaining(activity -> {
+				ActivitiesData newAct = new ActivitiesData();
+				newAct.setID(activity.getString("activity_ID"));
+				newAct.setTitle(activity.getString("activity_title"));
+				newAct.setActivityOwner(activity.getString("owner"));
+				newAct.setActivityTime(activity.getLong("activity_time"));
+				newAct.setDate(activity.getTimestamp("activity_date").toString()); //added
+				
+				activities.add(newAct);
+			});
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(activities)).build();
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+		
+	}
 	
 	
 //	@Authorize
