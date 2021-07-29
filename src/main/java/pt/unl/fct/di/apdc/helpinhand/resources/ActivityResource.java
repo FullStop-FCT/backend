@@ -44,6 +44,7 @@ import com.google.cloud.datastore.IncompleteKey;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.ListValue;
+import com.google.cloud.datastore.LongValue;
 import com.google.cloud.datastore.PathElement;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
@@ -245,6 +246,157 @@ public class ActivityResource {
 		}
 		
 	}	
+	
+//	@Authorize
+//	@GET
+//	@Path("/delete/{activityID}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	public Response triggerExecuteDeleteTask(@PathParam("activityID") String activityID, @Context HttpHeaders header) {
+//		Queue queue = QueueFactory.getDefaultQueue();
+//		
+//		String owner = getUsername(header);
+//		
+//		String url="/rest/activities/delete/"+activityID+"/"+owner;
+//		queue.add(TaskOptions.Builder.withUrl(url));
+//		return Response.ok().build();
+//	}
+//	
+//	
+//	@POST
+//	@Path("/delete/{activityID}/{owner}")
+//	public Response executeDeleteTask(@PathParam("activityID") String activityID, @PathParam("owner") String owner) {
+//		
+//		LOG.warning("Starting to execute delete tasks");
+//		Transaction txn = datastore.newTransaction();
+//
+//		try {
+////			LOG.warning(activityID);
+//			
+//
+////			LOG.warning(activityKey.toString());	
+////			Entity activityEntity = txn.get(activityKey);		
+//
+//			Query<Entity> createdQuery = Query.newEntityQueryBuilder()
+//					.setKind("CreatedActivityBy")
+//					.setFilter(CompositeFilter.and(
+//							PropertyFilter.eq("activity_ID", activityID),
+//							PropertyFilter.eq("created_by", owner)
+//							)
+//							)
+//					.build();
+//			
+//			List<Long> createdList = new ArrayList<>();
+//			QueryResults<Entity> createdResults = datastore.run(createdQuery);
+//			
+//			createdResults.forEachRemaining(creRes->{
+//				long id = creRes.getKey().getId();
+//				createdList.add(id);
+////				LOG.warning(String.valueOf(id));
+//			});
+//			
+//			long chave = Long.valueOf(createdList.get(0));
+////			System.out.println(chave);
+//			
+//			
+//			Key createdKey = datastore.newKeyFactory().addAncestors(PathElement.of("User", owner),
+//					PathElement.of("Activity", activityID)
+//					)
+//					.setKind("CreatedActivityBy")
+//					.newKey(chave);
+////			LOG.warning("created "+ createdKey.toString());
+////			Entity createdEntity = txn.get(createdKey);
+////			txn.delete(createdKey);
+//			txn.delete(createdKey);
+//			LOG.warning("deleted created" + chave);
+//			Key ownerKey = datastore.newKeyFactory().setKind("User").newKey(owner);
+//			
+//			Entity ownerEntity = txn.get(ownerKey);
+//			long createdActivities = ownerEntity.getLong("created_activities")-1;
+//				
+//			ownerEntity = Entity.newBuilder(ownerEntity)
+//					.set("created_activities", createdActivities)
+//					.build();
+//			
+//			txn.update(ownerEntity);	
+//			LOG.warning("updated owner : " + owner);
+//
+//			
+//			
+//			LOG.warning("Getting users");
+//			
+//			Query<Entity> query = Query.newEntityQueryBuilder()
+//					.setKind("UserJoinedActivity")
+//					.setFilter(
+//							PropertyFilter.eq("activity_ID", activityID))
+//					.build();
+//			
+//			QueryResults<Entity> joinedResults = datastore.run(query);
+//		
+//			if(joinedResults.hasNext()) {
+//				
+//				List<String> users = new ArrayList<>();
+//				
+//				
+//				joinedResults.forEachRemaining(result-> {
+//					
+//					String newUser = result.getString("user");
+//							
+//					users.add(newUser);
+//				});
+//				
+//				
+//				LOG.warning("updating joined activities");
+//				
+//				users.forEach(user->{
+////					Transaction txn2 = datastore.newTransaction();
+//					Key userKey = datastore.newKeyFactory().setKind("User").newKey(user);
+//					Entity userEntity = txn.get(userKey);
+//					
+//					if(userEntity!=null) {
+//					
+//						long joined = userEntity.getLong("user_joined_activities")-1;
+//						userEntity = Entity.newBuilder(userEntity)
+//								.set("user_joined_activities", joined)
+//								.build();
+//						txn.update(userEntity);
+//						LOG.warning("updated joined User : " + user);
+//						
+//						Key joinedKey = datastore.newKeyFactory()
+//								.addAncestors(PathElement.of("User", owner), PathElement.of("Activity", activityID))
+//								.setKind("UserJoinedActivity")
+//								.newKey(user);
+////						Entity joinedEntity = txn.get(joinedKey);
+//						txn.delete(joinedKey);
+//						
+//						LOG.warning("deleted joined User : " + user);
+//					}
+//				});
+//			}
+//			
+//
+//			Key activityKey = datastore.newKeyFactory()
+//					.addAncestor(PathElement.of("User", owner))
+//					.setKind("Activity")
+//					.newKey(activityID);
+//			
+//			txn.delete(activityKey);
+//
+////			txn.commit();
+//			
+//
+////			Thread.sleep(1000 * 60);
+//		} catch (Exception e) {
+//			LOG.logp(Level.SEVERE, this.getClass().getCanonicalName(), "executeComputeTask", "An exception has ocurred", e);
+//			txn.rollback();
+//			return Response.serverError().build();
+//		} //Simulates 5m execution
+//		
+//		
+//		txn.commit();
+//		return Response.ok().build();
+//	}
+//	
+//	
 	
 	
 //	@POST

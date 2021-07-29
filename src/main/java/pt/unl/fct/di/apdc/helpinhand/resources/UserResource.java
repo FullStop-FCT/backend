@@ -883,11 +883,11 @@ public class UserResource{
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
-				txn.rollback();
-				LOG.warning("No such user");
-				return Response.status(Status.FORBIDDEN).build();
-			}
+//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
 			
 			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
 				UsersData newUser = new UsersData();
@@ -980,11 +980,11 @@ public class UserResource{
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
-				txn.rollback();
-				LOG.warning("No such user");
-				return Response.status(Status.FORBIDDEN).build();
-			}
+//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
 			
 			if(userEntity.getString("user_profile").equals(Profile.PRIVATE.toString())) {
 				UsersData newUser = new UsersData();
@@ -1089,11 +1089,11 @@ public class UserResource{
 				return Response.status(Status.FORBIDDEN).build();
 			}
 			
-			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
-				txn.rollback();
-				LOG.warning("No such user");
-				return Response.status(Status.FORBIDDEN).build();
-			}
+//			if(!userEntity.getString("user_state").equals(State.ENABLED.toString())) {
+//				txn.rollback();
+//				LOG.warning("No such user");
+//				return Response.status(Status.FORBIDDEN).build();
+//			}
 			
 			UsersData newUser = new UsersData();
 			

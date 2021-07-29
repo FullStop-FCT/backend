@@ -230,7 +230,7 @@ public class AuthenticationResource {
 					if(user.getString("user_state").equals("DELETED") || user.getString("user_state").equals("DISABLED") || user.getString("user_state").equals("SUSPENDED")) {
 						txn.rollback();
 						LOG.warning("Failed login attempt");
-						return Response.status(Status.FORBIDDEN).entity("email").build();
+						return Response.status(Status.BAD_REQUEST).entity("email").build();
 					}
 					
 					hashedPWD = user.getString("user_pwd");
