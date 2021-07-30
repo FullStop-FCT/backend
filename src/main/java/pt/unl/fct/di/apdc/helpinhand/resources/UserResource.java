@@ -68,6 +68,7 @@ import pt.unl.fct.di.apdc.helpinhand.api.Authorize;
 import pt.unl.fct.di.apdc.helpinhand.api.PasswordChanger;
 import pt.unl.fct.di.apdc.helpinhand.api.RequestData;
 import pt.unl.fct.di.apdc.helpinhand.api.Secured;
+import pt.unl.fct.di.apdc.helpinhand.api.StaffData;
 import pt.unl.fct.di.apdc.helpinhand.api.UsersData;
 import pt.unl.fct.di.apdc.helpinhand.data.Database;
 import pt.unl.fct.di.apdc.helpinhand.util.Profile;
@@ -853,7 +854,13 @@ public class UserResource{
 		return Response.status(Status.BAD_REQUEST).entity("ups").build();
 	}
 	
-	
+	private String getRole(HttpHeaders header) {
+		
+		String authHeaderVal = header.getHeaderString("Authorization");
+		DecodedJWT jwtDecoded = JWT.decode(authHeaderVal.split(" ")[1]);
+		String role = jwtDecoded.getClaim("role").asString();
+		return role;
+	}	
 	
 	@Authorize
 	//@POST
@@ -861,13 +868,11 @@ public class UserResource{
 	@Path("/get/{username}")
 	//@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response doGetUser(@PathParam("username") String username) {
+	public Response doGetUser(@PathParam("username") String username, @Context HttpHeaders header) {
 		
 
-		 
 		Transaction txn = datastore.newTransaction();
 		
-
 		
 		Key userKey = database.getUserKey(username);
 
@@ -920,6 +925,8 @@ public class UserResource{
 				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
 				newUser.setReports(userEntity.getLong("user_reports"));
 
+				newUser.setState(userEntity.getString("user_state")); //just added
+				newUser.setRole(userEntity.getString("user_role")); //just added
 				
 
 				if(userEntity.contains("user_joined_activities") )
@@ -1017,6 +1024,9 @@ public class UserResource{
 				newUser.setCreatedActivities(userEntity.getLong("created_activities"));
 				newUser.setReports(userEntity.getLong("user_reports"));
 
+				newUser.setState(userEntity.getString("user_state")); //just added
+				newUser.setRole(userEntity.getString("user_role")); //just added
+				
 				if(userEntity.contains("user_joined_activities") )
 					newUser.setJoinedActivities(userEntity.getLong("user_joined_activities"));
 //				if(userEntity.contains("created_activities"))
@@ -1111,6 +1121,10 @@ public class UserResource{
 			newUser.setImage(userEntity.getString("user_image"));
 			newUser.setOrg(userEntity.getBoolean("is_org"));
 			newUser.setCreatedActivities(userEntity.getLong("created_activities"));
+			
+			newUser.setState(userEntity.getString("user_state")); //just added
+			newUser.setRole(userEntity.getString("user_role")); //just added
+			
 			
 			newUser.setReports(userEntity.getLong("user_reports"));
 

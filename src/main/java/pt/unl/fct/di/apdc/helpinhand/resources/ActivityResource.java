@@ -108,6 +108,29 @@ public class ActivityResource {
 		return username;
 	}
 	
+	
+	public static boolean isValidFormat(String format, String value) {
+        Date date = null;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat(format);
+            date = sdf.parse(value);
+            if (!value.equals(sdf.format(date))) {
+                date = null;
+            }
+        } catch (Exception ex) {
+        }
+        return date != null;
+    }
+	
+	@POST
+	@Path("/datatest")
+	public Response doDataTest(String data) {
+			return Response.ok().entity(isValidFormat("yyyy-MM-dd",data)).build();
+			
+			
+	}
+	
+	
 	@Authorize
 	@POST
 	@Path("/insert") //register
@@ -122,12 +145,26 @@ public class ActivityResource {
 		DecodedJWT jwtDecoded = JWT.decode(token);
 		String username = jwtDecoded.getIssuer();
 
+		
+		String dia="";
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = new Date();
+		
 		try {
+			
+			
+			if(!isValidFormat("yyyy-MM-dd",request.getActivityData().getDate())) {
+				dia = dateFormat.format(date);
+			}else {
+				dia= request.getActivityData().getDate();
+			}
+			
 
 			ActivitiesData act = new ActivitiesData(
 					request.getActivityData().getTitle(), 
 					request.getActivityData().getDescription(),
-					request.getActivityData().getDate(), 
+//					request.getActivityData().getDate(), 
+					dia,
 					request.getActivityData().getLocation(),
 					request.getActivityData().getTotalParticipants(),
 					username,
@@ -142,9 +179,7 @@ public class ActivityResource {
 //					request.getActivityData().getMaxWayPoints()
 					);
 			
-			
-			
-					
+				
 			Key activityKey = factory
 					.addAncestor(PathElement.of("User", act.getActivityOwner()))
 					.setKind("Activity")
@@ -183,7 +218,9 @@ public class ActivityResource {
 				activityEntity = Entity.newBuilder(activityKey)
 						.set("activity_title", request.getActivityData().getTitle())
 						.set("activity_description", request.getActivityData().getDescription())
-						.set("activity_date", request.getActivityData().getDate())
+//						.set("activity_date", request.getActivityData().getDate())
+						.set("activity_date", dia)
+						
 						.set("activity_location", request.getActivityData().getLocation())
 						.set("activity_participants", request.getActivityData().getParticipants()) //added
 						.set("activity_total_participants", request.getActivityData().getTotalParticipants()) //reworked

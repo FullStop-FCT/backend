@@ -923,6 +923,71 @@ Database database = new Database();
 		
 	}
 	
+	
+	@Authorize
+	@GET
+	@Path("/user")
+//	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response doGetUserNoLogin(@Context HttpHeaders header) {
+		
+		String staff = getUsername(header);
+		
+		Transaction txn = datastore.newTransaction();
+		
+
+		
+		Key staffKey = datastore.newKeyFactory().setKind("Staff").newKey(staff);	
+		
+		
+		try {
+				
+			Entity staffEntity = txn.get(staffKey);
+			
+
+			
+			if(staffEntity == null) {
+				txn.rollback();
+				LOG.warning("No such user");
+				return Response.status(Status.FORBIDDEN).build();
+			}
+			
+			StaffData newStaff = new StaffData();
+			
+			newStaff.setEmail(staffEntity.getString("staff_email"));
+			newStaff.setRole(staffEntity.getString("staff_role"));
+			newStaff.setUsername(staffEntity.getKey().getName());
+
+			
+			
+			txn.commit();
+			return Response.status(Status.OK).entity(g.toJson(newStaff)).build();
+			
+			
+		}catch(Exception e) {
+			txn.rollback();
+			LOG.warning("exception "+ e.toString());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+		}finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				LOG.warning("entered finally");
+				return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		}
+	}
+	
+	
+	private String getUsername(HttpHeaders header) {
+		
+		String authHeaderVal = header.getHeaderString("Authorization");
+		DecodedJWT jwtDecoded = JWT.decode(authHeaderVal.split(" ")[1]);
+		String username = jwtDecoded.getIssuer();
+		return username;
+	}	
+	
+	
+	
 	public Response doRoleChange(RequestData request) {
 		// TODO Auto-generated method stub
 		return null;
